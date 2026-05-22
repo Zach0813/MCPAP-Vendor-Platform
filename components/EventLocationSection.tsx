@@ -241,7 +241,7 @@ export function EventLocationSection({ event }: EventLocationSectionProps) {
                   const current = new Date(start);
 
                   while (current <= end) {
-                    const dateStr = current.toISOString().split('T')[0];
+                    const dateStr = current.toISOString().split('T')[0]!;
                     dates.push(dateStr);
                     current.setDate(current.getDate() + 1);
                   }
