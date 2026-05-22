@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
 import { EventLocationSection } from '@/components/EventLocationSection';
 
-function extractCityState(address: string | null): string {
+function extractCityState(address: string | null | undefined): string {
   if (!address) return 'Birmingham, AL';
   // Extract city and state from address (e.g., "123 Main St, Birmingham, AL 35203" → "Birmingham, AL")
   const parts = address.split(',').map(p => p.trim());
