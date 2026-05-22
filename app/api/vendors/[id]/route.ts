@@ -10,7 +10,7 @@ import type { MapPosition } from '@/types';
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check auth
@@ -35,10 +35,11 @@ export async function PUT(
       updates.map_position = map_position;
     }
 
+    const resolvedParams = await params;
     const { data, error } = await admin
       .from('vendors')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .select()
       .single();
 
