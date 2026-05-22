@@ -9,7 +9,7 @@ function extractCityState(address: string | null): string {
   const parts = address.split(',').map(p => p.trim());
   if (parts.length >= 3) {
     // City is typically at index 1, State at index 2
-    return `${parts[1]}, ${parts[2].split(' ')[0]}`;
+    return `${parts[1]!}, ${parts[2]!.split(' ')[0]}`;
   }
   return address;
 }
