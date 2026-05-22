@@ -1,0 +1,3 @@
+{
+  "//": "Legacy file. ESLint 9 uses eslint.config.mjs (flat config). This file is ignored but kept temporarily for tooling that hasn't migrated."
+}

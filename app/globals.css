@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------------------------------------------------------
+   Base resets & accessibility defaults
+   ----------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    --header-height: 64px;
+  }
+
+  html {
+    @apply h-full;
+    /* Smooth focus on anchor links, but respect user motion preferences */
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply h-full bg-surface text-ink antialiased font-sans;
+  }
+
+  /* High-visibility focus ring for keyboard navigation */
+  :focus-visible {
+    @apply outline-none ring-2 ring-sage-600 ring-offset-2 ring-offset-surface;
+  }
+
+  /* Skip-to-content link, becomes visible on focus */
+  .skip-link {
+    @apply sr-only;
+  }
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-50 rounded bg-sage-700 px-4 py-2 text-cream-50;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Mapbox GL — base styles (this CSS is required by mapbox-gl)
+   ----------------------------------------------------------------------------- */
+/* When mapbox-gl is installed, also import its CSS in the MapView component:
+   import 'mapbox-gl/dist/mapbox-gl.css'; */
