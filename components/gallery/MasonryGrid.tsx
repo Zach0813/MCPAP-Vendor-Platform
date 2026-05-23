@@ -58,6 +58,7 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
         src={item.file_url}
         loop
         muted
+        playsInline
         className="h-auto w-full"
         onPlay={handlePlayPauseChange}
         onPause={handlePlayPauseChange}
