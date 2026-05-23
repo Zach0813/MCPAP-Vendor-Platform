@@ -212,10 +212,11 @@ export function GalleryModerationGrid({ items }: { items: GalleryItem[] }) {
                   className="w-full h-auto object-contain"
                   priority
                   onLoad={(result) => {
-                    if (result.naturalWidth && result.naturalHeight) {
+                    const target = result.currentTarget as HTMLImageElement;
+                    if (target.naturalWidth && target.naturalHeight) {
                       setImageDimensions({
-                        width: result.naturalWidth,
-                        height: result.naturalHeight,
+                        width: target.naturalWidth,
+                        height: target.naturalHeight,
                       });
                     }
                   }}
