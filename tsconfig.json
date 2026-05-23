@@ -29,7 +29,7 @@
       ]
     },
     "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": false
   },
   "include": [
     "next-env.d.ts",

@@ -159,7 +159,7 @@ export function EventEditor({ event }: EventEditorProps) {
 
         const sources = map.getStyle().sources || {};
         Object.keys(sources).forEach((sourceId) => {
-          if (sources[sourceId as keyof typeof sources].type === "raster") {
+          if (sources[sourceId as keyof typeof sources]?.type === "raster") {
             try {
               map.removeSource(sourceId);
             } catch (e) {
