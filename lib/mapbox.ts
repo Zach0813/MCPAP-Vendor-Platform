@@ -25,9 +25,18 @@ export const DEFAULT_VIEW = {
 
 /**
  * Builds the actual map view by merging event-specific config
- * with sensible defaults.
+ * with sensible defaults. Accepts a partial config (and null/undefined) so
+ * server pages can pass `event?.map_config` straight through without a guard.
  */
-export function buildMapView(eventMapConfig: any = null) {
+type MapViewConfig = {
+  center?: [number, number];
+  zoom?: number;
+  pitch?: number;
+  bearing?: number;
+  styleUrl?: string;
+};
+
+export function buildMapView(eventMapConfig?: MapViewConfig | null) {
   return {
     longitude: eventMapConfig?.center?.[0] ?? DEFAULT_VIEW.longitude,
     latitude: eventMapConfig?.center?.[1] ?? DEFAULT_VIEW.latitude,

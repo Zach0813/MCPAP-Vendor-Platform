@@ -61,8 +61,8 @@ const config: Config = {
         surface: '#fdfcf7',   // page background
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-fraunces)', 'Georgia', 'serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'system-ui', 'sans-serif'],
+        display: ['Georgia', '"Times New Roman"', 'serif'],
       },
       minHeight: {
         'touch': '44px', // WCAG 2.5.5 minimum touch target

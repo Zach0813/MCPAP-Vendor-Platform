@@ -1,7 +1,8 @@
-import { createServerClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createServerClient, createAdminClient } from '@/lib/supabase/server';
 import { isAdmin } from '@/lib/auth';
-import type { MapPosition } from '@/types';
+import type { Database, MapPosition } from '@/types';
+
+type VendorUpdate = Database['public']['Tables']['vendors']['Update'];
 
 /**
  * PUT /api/vendors/[id]
@@ -19,27 +20,29 @@ export async function PUT(
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user || !(await isAdmin(user))) {
+    if (!user || !isAdmin(user)) {
       return new Response('Unauthorized', { status: 403 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as Partial<VendorUpdate> & {
+      map_position?: MapPosition | null;
+    };
     const { map_position, ...otherFields } = body;
 
-    // Use admin client to bypass RLS
-    const admin = await createAdminClient();
+    // Use admin client to bypass RLS (createAdminClient is synchronous — no await).
+    const admin = createAdminClient();
 
-    // Build update object
-    const updates: any = { ...otherFields };
+    // Build update object — narrowed to the table's Update shape.
+    const updates: VendorUpdate = { ...otherFields };
     if (map_position !== undefined) {
       updates.map_position = map_position;
     }
 
-    const resolvedParams = await params;
+    const { id: vendorId } = await params;
     const { data, error } = await admin
       .from('vendors')
       .update(updates)
-      .eq('id', resolvedParams.id)
+      .eq('id', vendorId)
       .select()
       .single();
 

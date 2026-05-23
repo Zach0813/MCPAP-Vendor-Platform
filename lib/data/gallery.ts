@@ -1,14 +1,14 @@
 import { createServerClient } from '@/lib/supabase/server';
+import type { MediaItem } from '@/types';
 
-export interface MediaGalleryItem {
-  id: string;
-  file_url: string;
-  media_type: 'image' | 'video';
-  title: string;
-  description: string | null;
-  featured: boolean;
-  created_at: string;
-}
+/**
+ * Public-gallery row — the subset of MediaItem fields the masonry grid renders.
+ * Kept as a narrowed type so the SELECT projection and TS shape stay in lockstep.
+ */
+export type MediaGalleryItem = Pick<
+  MediaItem,
+  'id' | 'file_url' | 'media_type' | 'title' | 'description' | 'featured' | 'created_at'
+>;
 
 export async function getApprovedGallery(): Promise<MediaGalleryItem[]> {
   const supabase = await createServerClient();

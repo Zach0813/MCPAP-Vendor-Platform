@@ -1,16 +1,8 @@
 import { createServerClient } from '@/lib/supabase/server';
+import type { MediaItem } from '@/types';
 
-export interface MediaItem {
-  id: string;
-  file_url: string;
-  media_type: 'image' | 'video';
-  title: string;
-  description: string | null;
-  category: string;
-  featured: boolean;
-  featured_order: number | null;
-  created_at: string;
-}
+// Re-export so existing imports `from '@/lib/queries/media'` keep working.
+export type { MediaItem };
 
 /**
  * Fetch featured media items for homepage carousel.

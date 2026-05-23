@@ -185,6 +185,29 @@ export type GalleryItem = {
   focal_point: { x: number; y: number } | null;
 }
 
+/**
+ * media — admin-managed image/video library. Powers the homepage carousel
+ * (featured=true rows) and the public gallery. See migration 0009 + 0011 + 0012.
+ *
+ * focal_point JSONB carries optional zoom (1–3) and videoTime (seconds) for
+ * the carousel pan/Ken-Burns effect. Migration 0012 added those keys; older
+ * rows may still have just { x, y }.
+ */
+export type MediaItem = {
+  id: string;
+  file_url: string;
+  media_type: 'image' | 'video';
+  title: string;
+  description: string | null;
+  category: string;
+  featured: boolean;
+  featured_order: number | null;
+  focal_point: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // -----------------------------------------------------------------------------
 // Supabase Database type — passed to the typed client as
 //   createClient<Database>(url, key)
@@ -268,6 +291,28 @@ export type Database = {
           focal_point?: { x: number; y: number } | null;
         };
         Update: Partial<Omit<GalleryItem, 'id'>>;
+        Relationships: [];
+      };
+      media: {
+        Row: MediaItem;
+        // Insert: file_url, media_type, title are required. Everything else is either
+        // DB-defaulted (category='general', featured=false, focal_point={x:50,y:50,...},
+        // created_at, updated_at) or nullable (description, featured_order, created_by).
+        Insert: Omit<
+          MediaItem,
+          'id' | 'created_at' | 'updated_at' | 'description' | 'category' | 'featured' | 'featured_order' | 'focal_point' | 'created_by'
+        > & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          description?: string | null;
+          category?: string;
+          featured?: boolean;
+          featured_order?: number | null;
+          focal_point?: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+          created_by?: string | null;
+        };
+        Update: Partial<Omit<MediaItem, 'id'>>;
         Relationships: [];
       };
     };

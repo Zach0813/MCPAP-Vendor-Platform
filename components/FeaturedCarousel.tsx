@@ -2,16 +2,22 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types';
 
-interface MediaItem {
+/**
+ * Local view-model — only the columns this carousel renders. Kept as a `type`
+ * (not an interface) so it can satisfy `Record<string, unknown>` constraints
+ * downstream if we ever swap to a typed insert/update here. See HANDOFF.md.
+ */
+type CarouselItem = {
   id: string;
   file_url: string;
   media_type: 'image' | 'video';
   title: string;
-  focal_point: { x: number; y: number } | null;
-}
+  focal_point: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+};
 
-const supabase = createClient(
+const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
@@ -27,7 +33,7 @@ const supabase = createClient(
  * - Positioned as absolute background behind hero content
  */
 export function FeaturedCarousel() {
-  const [items, setItems] = useState<MediaItem[]>([]);
+  const [items, setItems] = useState<CarouselItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [fadeState, setFadeState] = useState<'in' | 'hold' | 'out'>('in');
   const [isLoading, setIsLoading] = useState(true);

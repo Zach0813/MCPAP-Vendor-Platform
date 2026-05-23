@@ -6,19 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FocalPointEditor } from './FocalPointEditor';
 import { createBrowserClient } from '@/lib/supabase/client';
-
-interface MediaItem {
-  id: string;
-  file_url: string;
-  media_type: 'image' | 'video';
-  title: string;
-  description: string | null;
-  category: string;
-  featured: boolean;
-  featured_order: number | null;
-  focal_point: { x: number; y: number } | null;
-  created_at: string;
-}
+import type { MediaItem } from '@/types';
 
 const CATEGORIES = ['general', 'carousel', 'event-photos', 'gallery'];
 
@@ -53,7 +41,7 @@ export function MediaManager() {
         .from('media')
         .select('*')
         .order('featured', { ascending: false })
-        .order('featured_order', { ascending: true, nullsLast: true })
+        .order('featured_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (err) throw err;
@@ -108,16 +96,11 @@ export function MediaManager() {
 
       console.log(`Starting upload: ${filename} (${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB)`);
 
-      // Upload to storage with progress tracking
+      // Upload to storage
       const { error: uploadErr, data } = await supabase.storage
         .from('media')
         .upload(filename, fileToUpload, {
           contentType: fileToUpload.type,
-          onUploadProgress: (progress) => {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
-            console.log(`Upload progress: ${percent}%`);
-            setUploadProgress(percent);
-          },
         });
 
       if (uploadErr) {
@@ -137,14 +120,16 @@ export function MediaManager() {
       console.log('Saving to database...');
 
       // Create media record with default 'general' category
-      const { error: dbErr } = await supabase.from('media').insert({
-        file_url: urlData.publicUrl,
-        media_type: mediaType,
-        title: fileToUpload.name.replace(/\.[^/.]+$/, ''),
-        description: null,
-        category: 'general',
-        featured: false,
-      });
+      const { error: dbErr } = await supabase.from('media').insert([
+        {
+          file_url: urlData.publicUrl,
+          media_type: mediaType,
+          title: fileToUpload.name.replace(/\.[^/.]+$/, ''),
+          description: null,
+          category: 'general',
+          featured: false,
+        },
+      ]);
 
       if (dbErr) {
         console.error('Database error:', dbErr);
@@ -258,25 +243,19 @@ export function MediaManager() {
             loading={uploading}
             className="sm:whitespace-nowrap"
           >
-            {uploading ? `Uploading (${uploadProgress}%)...` : 'Choose File'}
+            {uploading ? 'Uploading...' : 'Choose File'}
           </Button>
         </div>
 
-        {/* Upload Progress Bar */}
+        {/* Upload Loading Indicator */}
         {uploading && (
           <div className="mt-4">
             <div className="mb-2 flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-sage-900 dark:text-cream-50">Upload progress</p>
-                <p className="text-sm text-muted dark:text-sage-400">{uploadProgress}%</p>
-              </div>
+              <p className="text-sm font-medium text-sage-900 dark:text-cream-50">Uploading file</p>
               <p className="text-xs text-muted dark:text-sage-400">{uploadFileName}</p>
             </div>
             <div className="h-2 w-full rounded-full bg-sage-100 dark:bg-sage-700 overflow-hidden">
-              <div
-                className="h-full bg-sage-600 dark:bg-sage-500 transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
+              <div className="h-full bg-sage-600 dark:bg-sage-500 w-full animate-pulse" />
             </div>
           </div>
         )}
@@ -517,7 +496,9 @@ export function MediaManager() {
                 <FocalPointEditor
                   mediaUrl={editForm.file_url}
                   mediaType={editForm.media_type || 'image'}
-                  currentFocalPoint={editForm.focal_point}
+                  // editForm is Partial<MediaItem>, so focal_point can be undefined.
+                  // FocalPointEditor only accepts `FocalPoint | null`, hence the coalesce.
+                  currentFocalPoint={editForm.focal_point ?? null}
                   onFocalPointChange={(point) => setEditForm({ ...editForm, focal_point: point })}
                 />
               )}

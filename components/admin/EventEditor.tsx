@@ -80,8 +80,8 @@ export function EventEditor({ event }: EventEditorProps) {
 
   // Map state
   const [mapStyle, setMapStyle] = useState<"street" | "satellite">(
-    (event.map_config?.styleUrl as any) === "google-satellite" ||
-    (event.map_config?.styleUrl as any) === "mapbox://styles/mapbox/satellite-v9"
+    event.map_config?.styleUrl === "google-satellite" ||
+    event.map_config?.styleUrl === "mapbox://styles/mapbox/satellite-v9"
       ? "satellite"
       : "street"
   );
@@ -98,7 +98,9 @@ export function EventEditor({ event }: EventEditorProps) {
   const [geocodeError, setGeocodeError] = useState("");
   const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; center: [number, number] }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const geocodeTimeoutRef = useRef<NodeJS.Timeout>();
+  // useRef<T>() with no arg is a TS error in React 19's typings (and a warning
+  // in some React 18 setups). Initialize with `null` and widen the type.
+  const geocodeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const isInitialMountRef = useRef(true);
   const shouldFlyToRef = useRef(false);
@@ -158,11 +160,11 @@ export function EventEditor({ event }: EventEditorProps) {
         });
 
         const sources = map.getStyle().sources || {};
-        Object.keys(sources).forEach((sourceId) => {
-          if (sources[sourceId as keyof typeof sources]?.type === "raster") {
+        Object.entries(sources).forEach(([sourceId, source]) => {
+          if (source?.type === "raster") {
             try {
               map.removeSource(sourceId);
-            } catch (e) {
+            } catch {
               // Source might not exist, ignore
             }
           }
@@ -321,10 +323,11 @@ export function EventEditor({ event }: EventEditorProps) {
           return;
         }
 
-        const results = data.features.map((feature: any) => ({
+        type MapboxFeature = { id: string; place_name: string; center: [number, number] };
+        const results = (data.features as MapboxFeature[]).map((feature) => ({
           id: feature.id,
           name: feature.place_name,
-          center: feature.center as [number, number],
+          center: feature.center,
         }));
 
         setSuggestions(results);

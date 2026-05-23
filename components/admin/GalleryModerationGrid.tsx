@@ -28,20 +28,20 @@ export function GalleryModerationGrid({ items }: { items: GalleryItem[] }) {
   const handleImageInteraction = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!imageContainerRef.current) return;
     const rect = imageContainerRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e ? (e.touches[0]?.clientX ?? 0) : e.clientX;
+    const clientY = 'touches' in e ? (e.touches[0]?.clientY ?? 0) : e.clientY;
     const x = ((clientX - rect.left) / rect.width) * 100;
     const y = ((clientY - rect.top) / rect.height) * 100;
     setFocalX(Math.max(0, Math.min(x, 100)));
     setFocalY(Math.max(0, Math.min(y, 100)));
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     setIsDragging(true);
     handleImageInteraction(e);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (isDragging) {
       handleImageInteraction(e);
     }
@@ -194,12 +194,12 @@ export function GalleryModerationGrid({ items }: { items: GalleryItem[] }) {
             <div
               ref={imageContainerRef}
               className="relative overflow-hidden rounded-card bg-sage-50 cursor-crosshair select-none"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
+              onMouseDown={handleStart}
+              onMouseMove={handleMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              onTouchStart={handleMouseDown as any}
-              onTouchMove={handleMouseMove as any}
+              onTouchStart={handleStart}
+              onTouchMove={handleMove}
               onTouchEnd={handleMouseUp}
               onDragStart={(e) => e.preventDefault()}
             >

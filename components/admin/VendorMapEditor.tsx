@@ -4,14 +4,28 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MAPBOX_TOKEN, MAPBOX_STYLE, buildMapView, isMapboxConfigured } from '@/lib/mapbox';
-import type { Vendor, EventMapConfig } from '@/types';
+import type { Vendor, EventMapConfig, MapPosition } from '@/types';
 import { cn } from '@/lib/utils';
 
-interface VendorMapEditorProps {
+/**
+ * map_position is a discriminated union (geo coords OR booth string) so it doesn't
+ * narrow nicely under bracket access. This helper extracts {lng, lat} for the
+ * geo-variant rows and returns nulls otherwise — keeps the rest of the file
+ * free of the `as any` casts that used to litter it.
+ */
+function readGeo(pos: MapPosition | null | undefined): { lng: number | null; lat: number | null } {
+  if (pos && typeof (pos as { lng?: number }).lng === 'number' && typeof (pos as { lat?: number }).lat === 'number') {
+    const geo = pos as { lng: number; lat: number };
+    return { lng: geo.lng, lat: geo.lat };
+  }
+  return { lng: null, lat: null };
+}
+
+type VendorMapEditorProps = {
   vendors: Vendor[];
   eventMapConfig?: EventMapConfig | null;
-  onVendorUpdate?: (vendorId: string, mapPosition: any) => Promise<void>;
-}
+  onVendorUpdate?: (vendorId: string, mapPosition: MapPosition) => Promise<void>;
+};
 
 /**
  * Interactive map for admins to position vendors.
@@ -62,6 +76,15 @@ export function VendorMapEditor({ vendors, eventMapConfig, onVendorUpdate }: Ven
       el.textContent = '📍';
       el.draggable = true;
 
+      // Create the mapbox marker BEFORE wiring listeners so the closures below
+      // close over an initialized binding (avoids TDZ + TS "used before declaration").
+      const marker = new mapboxgl.Marker({
+        element: el,
+        draggable: true,
+      })
+        .setLngLat([pos.lng, pos.lat])
+        .addTo(map);
+
       // Marker drag handlers
       el.addEventListener('dragstart', (e) => {
         e.preventDefault(); // Browser drag, not mapbox
@@ -70,28 +93,17 @@ export function VendorMapEditor({ vendors, eventMapConfig, onVendorUpdate }: Ven
 
       el.addEventListener('click', () => setSelectedVendor(vendor));
 
-      const marker = new mapboxgl.Marker({
-        element: el,
-        draggable: true,
-      })
-        .setLngLat([pos.lng, pos.lat])
-        .addTo(map);
-
       // On marker drag end
       marker.on('dragend', () => {
         const lngLat = marker.getLngLat();
-        setSelectedVendor((prev) =>
-          prev?.id === vendor.id
-            ? {
-                ...prev,
-                map_position: {
-                  ...prev.map_position,
-                  lng: Math.round(lngLat.lng * 10000) / 10000,
-                  lat: Math.round(lngLat.lat * 10000) / 10000,
-                } as any,
-              }
-            : prev
-        );
+        setSelectedVendor((prev) => {
+          if (prev?.id !== vendor.id) return prev;
+          const next: MapPosition = {
+            lng: Math.round(lngLat.lng * 10000) / 10000,
+            lat: Math.round(lngLat.lat * 10000) / 10000,
+          };
+          return { ...prev, map_position: next };
+        });
       });
 
       markersRef.current.set(vendor.id, marker);
@@ -110,15 +122,18 @@ export function VendorMapEditor({ vendors, eventMapConfig, onVendorUpdate }: Ven
   const handleSave = useCallback(async () => {
     if (!selectedVendor || !onVendorUpdate) return;
 
+    const { lng, lat } = readGeo(selectedVendor.map_position);
+    if (lng == null || lat == null) {
+      alert('Set a valid lat/lng before saving.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await onVendorUpdate(selectedVendor.id, {
-        lng: selectedVendor.map_position?.lng || selectedVendor.map_position?.['lng'],
-        lat: selectedVendor.map_position?.lat || selectedVendor.map_position?.['lat'],
-        booth_size: {
-          length: boothSize.length,
-          width: boothSize.width,
-        },
+        lng,
+        lat,
+        booth_size: { length: boothSize.length, width: boothSize.width },
       });
       alert(`✓ ${selectedVendor.name} position saved!`);
     } catch (err) {
@@ -159,19 +174,17 @@ export function VendorMapEditor({ vendors, eventMapConfig, onVendorUpdate }: Ven
                 <input
                   type="number"
                   step={0.0001}
-                  value={(selectedVendor.map_position as any)?.lat || ''}
+                  value={readGeo(selectedVendor.map_position).lat ?? ''}
                   onChange={(e) =>
-                    setSelectedVendor((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            map_position: {
-                              ...(prev.map_position as any),
-                              lat: parseFloat(e.target.value),
-                            },
-                          }
-                        : null
-                    )
+                    setSelectedVendor((prev) => {
+                      if (!prev) return null;
+                      const { lng } = readGeo(prev.map_position);
+                      const next: MapPosition = {
+                        lng: lng ?? 0,
+                        lat: parseFloat(e.target.value),
+                      };
+                      return { ...prev, map_position: next };
+                    })
                   }
                   className="w-full rounded border border-border px-2 py-1"
                 />
@@ -182,19 +195,17 @@ export function VendorMapEditor({ vendors, eventMapConfig, onVendorUpdate }: Ven
                 <input
                   type="number"
                   step={0.0001}
-                  value={(selectedVendor.map_position as any)?.lng || ''}
+                  value={readGeo(selectedVendor.map_position).lng ?? ''}
                   onChange={(e) =>
-                    setSelectedVendor((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            map_position: {
-                              ...(prev.map_position as any),
-                              lng: parseFloat(e.target.value),
-                            },
-                          }
-                        : null
-                    )
+                    setSelectedVendor((prev) => {
+                      if (!prev) return null;
+                      const { lat } = readGeo(prev.map_position);
+                      const next: MapPosition = {
+                        lng: parseFloat(e.target.value),
+                        lat: lat ?? 0,
+                      };
+                      return { ...prev, map_position: next };
+                    })
                   }
                   className="w-full rounded border border-border px-2 py-1"
                 />

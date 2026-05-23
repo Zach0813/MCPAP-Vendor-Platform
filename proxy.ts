@@ -4,14 +4,19 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 /**
- * Middleware refreshes the Supabase auth cookie on every request so that
- * Server Components can call `supabase.auth.getUser()` and get a fresh session.
+ * Proxy (formerly known as middleware in Next ≤15) — refreshes the Supabase
+ * auth cookie on every request so Server Components can call
+ * `supabase.auth.getUser()` and get a fresh session.
  *
- * This uses the canonical @supabase/ssr `getAll` / `setAll` cookie adapter —
+ * Next 16 renamed the convention from `middleware.ts` / `middleware()` to
+ * `proxy.ts` / `proxy()`. The API and behavior are otherwise identical.
+ * See: https://nextjs.org/docs/messages/middleware-to-proxy
+ *
+ * Uses the canonical @supabase/ssr `getAll` / `setAll` cookie adapter —
  * the same shape as `lib/supabase/server.ts`. The `get` / `set` / `remove`
  * trio is deprecated in @supabase/ssr ≥ 0.5.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

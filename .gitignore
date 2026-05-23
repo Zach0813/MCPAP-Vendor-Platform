@@ -43,3 +43,7 @@ Thumbs.db
 # Supabase local
 supabase/.branches
 supabase/.temp
+
+.next/
+.next.bak/
+.next.stash-*/

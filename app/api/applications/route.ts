@@ -13,6 +13,15 @@ import { applicationSchema } from '@/lib/validation/application';
  *
  * Public — no auth required.
  */
+// Photo URLs aren't part of the Zod schema (they're optional client-supplied
+// uploads), so we narrow the raw payload with a small structural type instead
+// of using `any`. The fields are still strings-or-undefined when present.
+type PhotoFields = {
+  logoUrl?: string | null;
+  ownerPhotoUrl?: string | null;
+  featuredPhotoUrl?: string | null;
+};
+
 export async function POST(request: NextRequest) {
   let payload: unknown;
   try {
@@ -29,6 +38,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const photos = (payload && typeof payload === 'object' ? payload : {}) as PhotoFields;
+
   const supabase = createAdminClient();
   const { data: app, error } = await supabase
     .from('vendor_applications')
@@ -41,9 +52,9 @@ export async function POST(request: NextRequest) {
       category: parsed.data.category,
       website: parsed.data.website ?? null,
       social_links: parsed.data.socialLinks ?? {},
-      logo_url: (payload as any).logoUrl ?? null,
-      owner_photo_url: (payload as any).ownerPhotoUrl ?? null,
-      featured_photo_url: (payload as any).featuredPhotoUrl ?? null,
+      logo_url: photos.logoUrl ?? null,
+      owner_photo_url: photos.ownerPhotoUrl ?? null,
+      featured_photo_url: photos.featuredPhotoUrl ?? null,
       status: 'pending',
     })
     .select()

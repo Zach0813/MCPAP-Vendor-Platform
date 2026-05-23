@@ -29,7 +29,6 @@ export function FocalPointEditor({
   onFocalPointChange,
 }: FocalPointEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const defaultFocalPoint = currentFocalPoint || { x: 50, y: 50, zoom: 1, videoTime: 0 };
   const [focalPoint, setFocalPoint] = useState<FocalPoint>(defaultFocalPoint);

@@ -29,7 +29,6 @@ export function ImageUploadField({
   isLoading = false,
   storagePath,
 }: ImageUploadFieldProps) {
-  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -39,7 +38,6 @@ export function ImageUploadField({
     setError(null);
 
     if (!selectedFile) {
-      setFile(null);
       setPreview(null);
       return;
     }
@@ -47,21 +45,17 @@ export function ImageUploadField({
     // Validation
     if (selectedFile.size > MAX_BYTES) {
       setError('File must be 10MB or smaller.');
-      setFile(null);
       return;
     }
 
     if (!ALLOWED_TYPES.includes(selectedFile.type)) {
       setError('Only JPEG, PNG, or WEBP images are allowed.');
-      setFile(null);
       return;
     }
 
-    setFile(selectedFile);
-
     // Show preview
     const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.onload = (ev) => setPreview(ev.target?.result as string);
     reader.readAsDataURL(selectedFile);
 
     // Auto-upload after file validation
@@ -87,7 +81,6 @@ export function ImageUploadField({
       const { data } = supabase.storage.from(storagePath).getPublicUrl(filename);
       onImageUrlChange(data.publicUrl);
 
-      setFile(null);
       setPreview(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');

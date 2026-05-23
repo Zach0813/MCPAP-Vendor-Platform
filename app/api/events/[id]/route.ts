@@ -1,6 +1,18 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, createAdminClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/auth";
 import type { EventMapConfig, PinLocation, EventTimes, EventContactInfo } from "@/types";
+
+type EventUpdateBody = {
+  name?: string;
+  location?: string;
+  address?: string | null;
+  date_start?: string;
+  date_end?: string;
+  pin_location?: PinLocation | null;
+  event_times?: EventTimes | null;
+  contact_info?: EventContactInfo | null;
+  map_config?: EventMapConfig;
+};
 
 export async function PUT(
   request: Request,
@@ -17,7 +29,7 @@ export async function PUT(
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as EventUpdateBody;
     const {
       name,
       location,
@@ -38,20 +50,20 @@ export async function PUT(
       );
     }
 
-    // Use admin client for unrestricted update
-    const adminSupabase = await createServerClient();
+    // Use admin client for unrestricted update (createAdminClient is sync).
+    const adminSupabase = createAdminClient();
     const { data, error } = await adminSupabase
       .from("events")
       .update({
         name,
         location,
-        address: address || null,
+        address: address ?? null,
         date_start,
         date_end,
-        pin_location: pin_location as PinLocation | null,
-        event_times: event_times as EventTimes | null,
-        contact_info: contact_info as EventContactInfo | null,
-        ...(map_config && { map_config: map_config as EventMapConfig }),
+        pin_location: pin_location ?? null,
+        event_times: event_times ?? null,
+        contact_info: contact_info ?? null,
+        ...(map_config && { map_config }),
       })
       .eq("id", id)
       .select()
