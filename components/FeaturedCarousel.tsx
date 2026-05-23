@@ -78,7 +78,7 @@ export function FeaturedCarousel() {
         { x: -4, y: 0 },
         { x: 4, y: 0 },
       ];
-      const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+      const randomDirection = directions[Math.floor(Math.random() * directions.length)]!;
       setPanDirection(randomDirection);
 
       // Phase 0: Fade in (0-2s)
@@ -114,7 +114,7 @@ export function FeaturedCarousel() {
 
   // Handle video playback
   useEffect(() => {
-    const item = items[currentIndex];
+    const item = items[currentIndex]!;
     if (!item) return;
 
     if (item.media_type === 'video' && videoRef.current) {
@@ -132,7 +132,7 @@ export function FeaturedCarousel() {
     );
   }
 
-  const currentItem = items[currentIndex];
+  const currentItem = items[currentIndex]!;
 
   return (
     <div
