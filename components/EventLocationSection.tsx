@@ -260,7 +260,7 @@ export function EventLocationSection({ event }: EventLocationSectionProps) {
 
                     // Convert 24-hour time to 12-hour format
                     const formatTime = (time: string) => {
-                      const [hours, minutes] = time.split(':');
+                      const [hours, minutes] = time.split(':') as [string, string];
                       const hour = parseInt(hours);
                       const ampm = hour >= 12 ? 'PM' : 'AM';
                       const displayHour = hour % 12 || 12;
