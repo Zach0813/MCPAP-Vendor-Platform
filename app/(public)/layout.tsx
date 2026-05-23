@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import { PortalLinks } from '@/components/nav/PortalLinks';
+import { MobileNav } from '@/components/nav/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const NAV = [
@@ -11,7 +12,7 @@ const NAV = [
   { href: '/feed', label: 'Feed' },
   { href: '/faq', label: 'FAQ' },
   { href: '/apply', label: 'Apply' },
-] as const;
+] as const; // Used by desktop nav below
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createServerClient();
@@ -48,40 +49,7 @@ export default async function PublicLayout({ children }: { children: React.React
             </ul>
             <PortalLinks user={user} />
           </div>
-          {/* TODO: replace with proper mobile menu drawer */}
-          <details className="lg:hidden">
-            <summary
-              className="inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded text-ink dark:text-cream-50"
-              aria-label="Toggle navigation"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </summary>
-            <ul className="absolute right-4 mt-2 flex w-56 flex-col rounded-card border border-border bg-surface p-2 shadow-card dark:bg-sage-900 dark:border-sage-700">
-              <li className="border-b border-border pb-2 mb-2 dark:border-sage-700">
-                <Link
-                  href="/"
-                  className="block min-h-touch rounded px-3 py-2 text-sm font-medium font-semibold text-sage-700 hover:bg-sage-50 dark:text-cream-50 dark:hover:bg-sage-800"
-                >
-                  ← Home
-                </Link>
-              </li>
-              {NAV.slice(1).map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="block min-h-touch rounded px-3 py-2 text-sm font-medium hover:bg-sage-50 dark:text-cream-50 dark:hover:bg-sage-800"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-              <li className="border-t border-border pt-2 dark:border-sage-700">
-                <PortalLinks user={user} className="flex flex-col items-stretch gap-0" />
-              </li>
-            </ul>
-          </details>
+          <MobileNav user={user} />
         </nav>
       </header>
       <main id="main-content" className="flex-1">
