@@ -6,10 +6,12 @@ import type { MediaGalleryItem } from '@/lib/data/gallery';
 
 /**
  * Video gallery item with smart autoplay — plays only when visible in viewport
+ * Features custom controls (play/pause only, no fullscreen)
  */
 function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -33,15 +35,50 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
     return () => observer.disconnect();
   }, []);
 
+  const handlePlayPause = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const handlePlayPauseChange = () => {
+    setIsPlaying(!videoRef.current?.paused);
+  };
+
   return (
-    <video
-      ref={videoRef}
-      src={item.file_url}
-      controls
-      loop
-      muted
-      className="h-auto w-full"
-    />
+    <div className="relative bg-black/10">
+      <video
+        ref={videoRef}
+        src={item.file_url}
+        loop
+        muted
+        className="h-auto w-full"
+        onPlay={handlePlayPauseChange}
+        onPause={handlePlayPauseChange}
+      />
+      {/* Custom play/pause button overlay */}
+      <button
+        onClick={handlePlayPause}
+        className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20"
+        aria-label={isPlaying ? 'Pause video' : 'Play video'}
+      >
+        {isPlaying ? (
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+          </svg>
+        ) : (
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        )}
+      </button>
+    </div>
   );
 }
 
@@ -60,7 +97,7 @@ export function MasonryGrid({ items }: { items: MediaGalleryItem[] }) {
   }
 
   return (
-    <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+    <div className="columns-2 gap-4 sm:columns-2 lg:columns-3">
       {items.map((item) => (
         <figure
           key={item.id}
