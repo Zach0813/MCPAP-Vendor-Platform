@@ -7,7 +7,12 @@ import type { EmailOtpType } from '@supabase/supabase-js';
  * Handles both PKCE (`code`) and implicit (`token_hash` + `type`) redirect styles.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  // Use server-side SITE_URL, fall back to NEXT_PUBLIC_SITE_URL, then hardcoded production URL
+  const origin =
+    process.env.SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://mcpap-dev.thelancave.net';
   const code = searchParams.get('code');
   const tokenHash = searchParams.get('token_hash') || searchParams.get('token');
   const type = searchParams.get('type') as EmailOtpType | null;
