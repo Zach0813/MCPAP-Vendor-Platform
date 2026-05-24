@@ -84,6 +84,8 @@ export function VendorImportForm() {
       const text = await file.text();
       const rows = parseCSV(text);
 
+      console.log(`[CSV Import] Parsed ${rows.length} total rows from CSV`);
+
       if (rows.length === 0) {
         throw new Error('No vendor rows found in CSV');
       }
@@ -110,6 +112,8 @@ export function VendorImportForm() {
 
       const { duplicates: foundDuplicates } = await duplicateCheckResponse.json();
 
+      console.log(`[CSV Import] Duplicate check found ${foundDuplicates.length} duplicates`);
+
       // Separate valid rows from duplicates
       const duplicateIndices = new Set(foundDuplicates.map((d: any) => d.index));
       const duplicates: Array<{ row: Record<string, string>; index: number; existingId: string }> = [];
@@ -133,6 +137,7 @@ export function VendorImportForm() {
 
       // If duplicates found, ask user what to do
       let rowsToImport = validRows;
+      console.log(`[CSV Import] Valid rows: ${validRows.length}, Duplicates: ${duplicates.length}`);
       if (duplicates.length > 0) {
         const duplicateList = duplicates
           .map((d) => `- ${d.row.name} (${d.row.email || d.row.phone || 'no contact'})`)
