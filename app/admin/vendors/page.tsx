@@ -19,20 +19,20 @@ export default async function AdminVendorsPage() {
   return (
     <>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-semibold text-sage-900">All Vendors</h1>
-        <p className="mt-2 text-muted">
+        <h1 className="font-display text-3xl font-semibold text-sage-900 dark:text-sage-50">All Vendors</h1>
+        <p className="mt-2 text-muted dark:text-sage-300">
           Update status, edit details, or suspend a vendor. Changes here are immediately visible publicly if status=approved.
         </p>
       </header>
 
       {error ? (
-        <p className="rounded-card border border-terracotta-300 bg-terracotta-50 p-4 text-terracotta-800">
+        <p className="rounded-card border border-terracotta-300 bg-terracotta-50 p-4 text-terracotta-800 dark:border-terracotta-700 dark:bg-terracotta-900 dark:text-terracotta-100">
           Failed to load vendors: {error.message}
         </p>
       ) : (
         <>
           <section className="mb-8">
-            <h2 className="font-display text-xl font-semibold text-sage-900 mb-3">Import / Export</h2>
+            <h2 className="font-display text-xl font-semibold text-sage-900 dark:text-sage-50 mb-3">Import / Export</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <VendorImportForm />
               <div className="rounded-card border border-border bg-surface p-4 flex flex-col">
@@ -47,7 +47,7 @@ export default async function AdminVendorsPage() {
 
           <section className="mb-8">
             <h2 className="font-display text-xl font-semibold text-sage-900 mb-3">Position Vendors on Map</h2>
-            <p className="text-sm text-muted mb-4">
+            <p className="text-sm text-muted dark:text-sage-300 mb-4">
               Drag pins to set coordinates, or enter lat/lng manually. Set booth size (default 10x10 feet).
             </p>
             <VendorMapEditorWrapper vendors={vendors ?? []} eventMapConfig={event?.map_config ?? null} />

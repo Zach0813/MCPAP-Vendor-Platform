@@ -72,19 +72,19 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
   return (
     <>
       {error ? (
-        <p role="alert" className="mb-3 rounded border border-terracotta-300 bg-terracotta-50 p-3 text-sm text-terracotta-800">
+        <p role="alert" className="mb-3 rounded border border-terracotta-300 bg-terracotta-50 p-3 text-sm text-terracotta-800 dark:border-terracotta-700 dark:bg-terracotta-900 dark:text-terracotta-100">
           {error}
         </p>
       ) : null}
       <div className="overflow-x-auto rounded-card border border-border bg-surface">
         <table className="min-w-full divide-y divide-border text-sm">
-          <thead className="bg-sage-50 text-left">
+          <thead className="bg-sage-50 text-left dark:bg-sage-900">
             <tr>
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Change</th>
-              <th className="px-3 py-2 text-right">Delete</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Name</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Category</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Status</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Change</th>
+              <th className="px-3 py-2 text-right text-ink dark:text-sage-100">Delete</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
