@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import { VENDOR_CATEGORY, VENDOR_STATUS, type Vendor } from '@/types';
+import { VENDOR_CATEGORY, VENDOR_STATUS, type Database } from '@/types';
 import { Button } from '@/components/ui/Button';
+
+type VendorInsert = Database['public']['Tables']['vendors']['Insert'];
 
 export function VendorImportForm() {
   const [file, setFile] = useState<File | null>(null);
@@ -97,13 +99,13 @@ export function VendorImportForm() {
         }
 
         try {
-          // Build vendor object, skipping empty fields
-          const vendorData: Record<string, any> = {
+          // Build vendor object with proper typing
+          const vendorData: VendorInsert = {
             name: row.name.trim(),
-            status: row.status?.trim() || 'pending',
+            status: (row.status?.trim() || 'pending') as any,
             email: row.email?.trim() || null,
             phone: row.phone?.trim() || null,
-            category: row.category?.trim() || null,
+            category: (row.category?.trim() || null) as any,
             website: row.website?.trim() || null,
             instagram_handle: row.instagram_handle?.trim() || null,
             facebook_handle: row.facebook_handle?.trim() || null,
