@@ -119,11 +119,14 @@ export function VendorImportForm() {
       const duplicates: Array<{ row: Record<string, string>; index: number; existingId: string }> = [];
       const validRows: Array<{ row: Record<string, string>; index: number }> = [];
 
+      const validationErrors: Array<string> = [];
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const [isValid] = validateVendor(row);
+        const [isValid, validationError] = validateVendor(row);
 
         if (!isValid) {
+          validationErrors.push(`Row ${i + 2} (${row.name || 'NO NAME'}): ${validationError}`);
           continue; // Skip validation errors
         }
 
@@ -135,9 +138,13 @@ export function VendorImportForm() {
         }
       }
 
+      console.log(`[CSV Import] Valid rows: ${validRows.length}, Duplicates: ${duplicates.length}, Validation errors: ${validationErrors.length}`);
+      if (validationErrors.length > 0) {
+        console.log('[CSV Import] First 5 validation errors:', validationErrors.slice(0, 5));
+      }
+
       // If duplicates found, ask user what to do
       let rowsToImport = validRows;
-      console.log(`[CSV Import] Valid rows: ${validRows.length}, Duplicates: ${duplicates.length}`);
       if (duplicates.length > 0) {
         const duplicateList = duplicates
           .map((d) => `- ${d.row.name} (${d.row.email || d.row.phone || 'no contact'})`)
