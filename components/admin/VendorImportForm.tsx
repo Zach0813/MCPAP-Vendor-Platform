@@ -64,6 +64,9 @@ export function VendorImportForm() {
     if (row.status && !VENDOR_STATUS.includes(row.status as any)) {
       return [false, `Invalid status: ${row.status}`];
     }
+    if (row.logo_url && !/^https?:\/\/.+/.test(row.logo_url)) {
+      return [false, `Invalid logo URL: ${row.logo_url}`];
+    }
     return [true, null];
   };
 
@@ -86,11 +89,71 @@ export function VendorImportForm() {
       }
 
       const supabase = createBrowserClient();
-      let successCount = 0;
-      const errors: string[] = [];
+
+      // Prepare vendors for duplicate checking
+      const vendorsToCheck = rows.map((row) => ({
+        name: row.name?.trim() || '',
+        email: row.email?.trim() || '',
+        phone: row.phone?.trim() || '',
+      }));
+
+      // Call server endpoint to check duplicates (bypasses RLS)
+      const duplicateCheckResponse = await fetch('/api/vendors/check-duplicates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendors: vendorsToCheck }),
+      });
+
+      if (!duplicateCheckResponse.ok) {
+        throw new Error('Failed to check for duplicates');
+      }
+
+      const { duplicates: foundDuplicates } = await duplicateCheckResponse.json();
+
+      // Separate valid rows from duplicates
+      const duplicateIndices = new Set(foundDuplicates.map((d: any) => d.index));
+      const duplicates: Array<{ row: Record<string, string>; index: number; existingId: string }> = [];
+      const validRows: Array<{ row: Record<string, string>; index: number }> = [];
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
+        const [isValid] = validateVendor(row);
+
+        if (!isValid) {
+          continue; // Skip validation errors
+        }
+
+        if (duplicateIndices.has(i)) {
+          const dup = foundDuplicates.find((d: any) => d.index === i);
+          duplicates.push({ row, index: i, existingId: dup!.existingId });
+        } else {
+          validRows.push({ row, index: i });
+        }
+      }
+
+      // If duplicates found, ask user what to do
+      let rowsToImport = validRows;
+      if (duplicates.length > 0) {
+        const duplicateList = duplicates
+          .map((d) => `- ${d.row.name} (${d.row.email || d.row.phone || 'no contact'})`)
+          .slice(0, 5)
+          .join('\n');
+        const moreText = duplicates.length > 5 ? `\n... and ${duplicates.length - 5} more` : '';
+
+        const skipAll = window.confirm(
+          `Found ${duplicates.length} potential duplicate(s):\n\n${duplicateList}${moreText}\n\nClick OK to skip duplicates and import only ${rowsToImport.length} new vendors.\nClick Cancel to cancel import.`
+        );
+        if (!skipAll) {
+          throw new Error('Import cancelled');
+        }
+        // Continue with only non-duplicate rows
+      }
+
+      let successCount = 0;
+      const errors: string[] = [];
+
+      // Import non-duplicate rows
+      for (const { row, index: i } of rowsToImport) {
         const [isValid, validationError] = validateVendor(row);
 
         if (!isValid) {
@@ -111,9 +174,9 @@ export function VendorImportForm() {
             facebook_handle: row.facebook_handle?.trim() || null,
             tiktok_handle: row.tiktok_handle?.trim() || null,
             description: row.description?.trim() || null,
-            logo_url: null,
-            owner_photo_url: null,
-            featured_photo_url: null,
+            logo_url: row.logo_url?.trim() || null,
+            owner_photo_url: row.owner_photo_url?.trim() || null,
+            featured_photo_url: row.featured_photo_url?.trim() || null,
             user_id: null,
             map_position: null,
             event_years: null,
@@ -135,8 +198,11 @@ export function VendorImportForm() {
 
       setResult({
         success: successCount,
-        failed: rows.length - successCount,
-        errors: errors.slice(0, 10), // Show first 10 errors
+        failed: rowsToImport.length - successCount,
+        errors: [
+          ...(duplicates.length > 0 ? [`⊘ Skipped ${duplicates.length} duplicate(s)`] : []),
+          ...errors.slice(0, 10),
+        ],
       });
 
       if (successCount > 0) {
@@ -202,7 +268,7 @@ export function VendorImportForm() {
       </div>
 
       <p className="mt-2 text-xs text-muted">
-        CSV should have columns: name, email, phone, category, website, instagram_handle, facebook_handle, tiktok_handle, description, status
+        CSV columns: name, owner_name (optional), email, phone, category, website, instagram_handle, facebook_handle, tiktok_handle, description, logo_url, featured_photo_url, owner_photo_url (optional), status
       </p>
     </div>
   );

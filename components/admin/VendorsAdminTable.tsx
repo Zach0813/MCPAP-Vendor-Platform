@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { VENDOR_STATUS, type Vendor, type VendorStatus } from '@/types';
@@ -9,6 +9,26 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+
+  useEffect(() => {
+    // Get current user
+    async function loadUserInfo() {
+      const supabase = createBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        setCurrentUserId(user.id);
+        // Note: Admin check would require a users table with admin role
+        // For now, we just protect the current user's vendor
+      }
+    }
+
+    loadUserInfo();
+  }, []);
 
   async function updateStatus(id: string, status: VendorStatus) {
     setBusyId(id);
@@ -90,32 +110,47 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
                   </select>
                 </td>
                 <td className="px-3 py-3 text-right">
-                  {deleteConfirmId === v.id ? (
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => deleteVendor(v.id)}
-                        disabled={busyId === v.id}
-                        className="text-sm font-medium text-terracotta-700 hover:text-terracotta-900 disabled:opacity-50"
-                      >
-                        {busyId === v.id ? 'Deleting...' : 'Confirm'}
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirmId(null)}
-                        disabled={busyId === v.id}
-                        className="text-sm font-medium text-muted hover:text-ink disabled:opacity-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setDeleteConfirmId(v.id)}
-                      disabled={busyId === v.id}
-                      className="text-sm font-medium text-terracotta-700 hover:text-terracotta-900 disabled:opacity-50"
-                    >
-                      Delete
-                    </button>
-                  )}
+                  {(() => {
+                    const isCurrentVendor = v.user_id === currentUserId;
+                    const cannotDelete = isCurrentVendor;
+                    const deleteReason = isCurrentVendor ? 'Cannot delete your own profile' : null;
+
+                    return deleteConfirmId === v.id ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => deleteVendor(v.id)}
+                          disabled={busyId === v.id || cannotDelete}
+                          title={deleteReason || ''}
+                          className="text-sm font-medium text-terracotta-700 hover:text-terracotta-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {busyId === v.id ? 'Deleting...' : 'Confirm'}
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(null)}
+                          disabled={busyId === v.id}
+                          className="text-sm font-medium text-muted hover:text-ink disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setDeleteConfirmId(v.id)}
+                          disabled={busyId === v.id || cannotDelete}
+                          title={deleteReason || ''}
+                          className="text-sm font-medium text-terracotta-700 hover:text-terracotta-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Delete
+                        </button>
+                        {cannotDelete && (
+                          <span className="text-xs text-muted" title={deleteReason || ''}>
+                            ⛔
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </td>
               </tr>
             ))}

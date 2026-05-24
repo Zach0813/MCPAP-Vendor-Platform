@@ -9,11 +9,33 @@ export default async function VendorProfile() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: vendor } = await supabase
+  let { data: vendor } = await supabase
     .from('vendors')
     .select('*')
     .eq('user_id', user!.id)
     .maybeSingle();
+
+  // If no vendor found by user_id, try to link an imported vendor by email
+  if (!vendor && user?.email) {
+    const { data: importedVendor } = await supabase
+      .from('vendors')
+      .select('*')
+      .eq('email', user.email)
+      .is('user_id', null) // Only unlinked vendors
+      .maybeSingle();
+
+    if (importedVendor) {
+      // Link the vendor to this user
+      const { data: linkedVendor } = await supabase
+        .from('vendors')
+        .update({ user_id: user.id })
+        .eq('id', importedVendor.id)
+        .select()
+        .single();
+
+      vendor = linkedVendor;
+    }
+  }
 
   return (
     <>
