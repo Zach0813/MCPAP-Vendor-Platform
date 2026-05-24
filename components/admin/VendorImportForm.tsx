@@ -98,19 +98,18 @@ export function VendorImportForm() {
 
         try {
           // Build vendor object, skipping empty fields
-          const vendorData: Partial<Vendor> = {
+          const vendorData: Record<string, any> = {
             name: row.name.trim(),
-            status: (row.status?.trim() || 'pending') as any,
+            status: row.status?.trim() || 'pending',
+            email: row.email?.trim() || null,
+            phone: row.phone?.trim() || null,
+            category: row.category?.trim() || null,
+            website: row.website?.trim() || null,
+            instagram_handle: row.instagram_handle?.trim() || null,
+            facebook_handle: row.facebook_handle?.trim() || null,
+            tiktok_handle: row.tiktok_handle?.trim() || null,
+            description: row.description?.trim() || null,
           };
-
-          if (row.email?.trim()) vendorData.email = row.email.trim();
-          if (row.phone?.trim()) vendorData.phone = row.phone.trim();
-          if (row.category?.trim()) vendorData.category = row.category.trim() as any;
-          if (row.website?.trim()) vendorData.website = row.website.trim();
-          if (row.instagram_handle?.trim()) vendorData.instagram_handle = row.instagram_handle.trim();
-          if (row.facebook_handle?.trim()) vendorData.facebook_handle = row.facebook_handle.trim();
-          if (row.tiktok_handle?.trim()) vendorData.tiktok_handle = row.tiktok_handle.trim();
-          if (row.description?.trim()) vendorData.description = row.description.trim();
 
           const { error: insertError } = await supabase.from('vendors').insert([vendorData]);
 
