@@ -1,6 +1,8 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { VendorsAdminTable } from '@/components/admin/VendorsAdminTable';
 import { VendorMapEditorWrapper } from '@/components/admin/VendorMapEditorWrapper';
+import { VendorExportButton } from '@/components/admin/VendorExportButton';
+import { VendorImportForm } from '@/components/admin/VendorImportForm';
 import { getCurrentEvent } from '@/lib/data/events';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +31,20 @@ export default async function AdminVendorsPage() {
         </p>
       ) : (
         <>
+          <section className="mb-8">
+            <h2 className="font-display text-xl font-semibold text-sage-900 mb-3">Import / Export</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <VendorImportForm />
+              <div className="rounded-card border border-border bg-surface p-4 flex flex-col">
+                <h3 className="font-semibold text-ink mb-3">Export All Vendors</h3>
+                <p className="text-sm text-muted mb-3 flex-1">
+                  Download all vendors as CSV for backup or external management.
+                </p>
+                <VendorExportButton vendors={vendors ?? []} />
+              </div>
+            </div>
+          </section>
+
           <section className="mb-8">
             <h2 className="font-display text-xl font-semibold text-sage-900 mb-3">Position Vendors on Map</h2>
             <p className="text-sm text-muted mb-4">
