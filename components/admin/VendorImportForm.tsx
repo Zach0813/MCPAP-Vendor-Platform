@@ -99,19 +99,25 @@ export function VendorImportForm() {
         }
 
         try {
-          // Build vendor object with proper typing
-          const vendorData: VendorInsert = {
+          // Build vendor object - explicitly provide all fields
+          const vendorData = {
             name: row.name.trim(),
-            status: (row.status?.trim() || 'pending') as any,
+            status: (row.status?.trim() || 'pending') as VendorInsert['status'],
             email: row.email?.trim() || null,
             phone: row.phone?.trim() || null,
-            category: (row.category?.trim() || null) as any,
+            category: (row.category?.trim() || null) as VendorInsert['category'],
             website: row.website?.trim() || null,
             instagram_handle: row.instagram_handle?.trim() || null,
             facebook_handle: row.facebook_handle?.trim() || null,
             tiktok_handle: row.tiktok_handle?.trim() || null,
             description: row.description?.trim() || null,
-          };
+            logo_url: null,
+            owner_photo_url: null,
+            featured_photo_url: null,
+            user_id: null,
+            map_position: null,
+            event_years: null,
+          } as VendorInsert;
 
           const { error: insertError } = await supabase.from('vendors').insert([vendorData]);
 
