@@ -201,7 +201,7 @@ export function VendorImportForm() {
         failed: rowsToImport.length - successCount,
         errors: [
           ...(duplicates.length > 0 ? [`⊘ Skipped ${duplicates.length} duplicate(s)`] : []),
-          ...errors.slice(0, 10),
+          ...errors,
         ],
       });
 
@@ -219,11 +219,11 @@ export function VendorImportForm() {
   };
 
   return (
-    <div className="rounded-card border border-border bg-surface p-4">
-      <h3 className="font-semibold text-ink mb-3">Import Vendors from CSV</h3>
+    <div className="rounded-card border border-border bg-surface p-4 dark:bg-sage-900">
+      <h3 className="font-semibold text-ink dark:text-sage-100 mb-3">Import Vendors from CSV</h3>
 
       {error ? (
-        <p role="alert" className="mb-3 rounded border border-terracotta-300 bg-terracotta-50 p-2 text-sm text-terracotta-800">
+        <p role="alert" className="mb-3 rounded border border-terracotta-300 bg-terracotta-50 p-2 text-sm text-terracotta-800 dark:border-terracotta-700 dark:bg-terracotta-900 dark:text-terracotta-100">
           {error}
         </p>
       ) : null}
@@ -233,19 +233,18 @@ export function VendorImportForm() {
           role="status"
           className={`mb-3 rounded border p-3 text-sm ${
             result.failed === 0
-              ? 'border-sage-300 bg-sage-50 text-sage-800'
-              : 'border-amber-300 bg-amber-50 text-amber-800'
+              ? 'border-sage-300 bg-sage-50 text-sage-800 dark:border-sage-700 dark:bg-sage-900 dark:text-sage-100'
+              : 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-100'
           }`}
         >
           <p className="font-medium">
             ✓ {result.success} imported {result.failed > 0 ? `• ✗ ${result.failed} failed` : ''}
           </p>
           {result.errors.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs">
+            <ul className="mt-2 space-y-1 text-xs max-h-64 overflow-y-auto">
               {result.errors.map((e, i) => (
                 <li key={i}>• {e}</li>
               ))}
-              {result.errors.length === 10 && <li>• ... and more</li>}
             </ul>
           )}
         </div>
@@ -267,7 +266,7 @@ export function VendorImportForm() {
         </Button>
       </div>
 
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-2 text-xs text-muted dark:text-sage-400">
         CSV columns: name, owner_name (optional), email, phone, category, website, instagram_handle, facebook_handle, tiktok_handle, description, logo_url, featured_photo_url, owner_photo_url (optional), status
       </p>
     </div>
