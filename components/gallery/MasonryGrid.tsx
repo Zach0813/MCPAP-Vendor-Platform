@@ -1,71 +1,48 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
+import { OptimizedVideo } from '@/components/video/OptimizedVideo';
 import type { MediaGalleryItem } from '@/lib/data/gallery';
 
 /**
  * Video gallery item with smart autoplay — plays only when visible in viewport
- * Features custom controls (play/pause only, no fullscreen)
+ * Uses OptimizedVideo for lazy loading, multiple codecs, and intelligent buffering
  */
 function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-        if (entry.isIntersecting) {
-          video.play().catch(() => {
-            // Autoplay may be blocked, that's ok
-          });
-        } else {
-          video.pause();
-        }
-      },
-      { threshold: 0.5 } // Trigger when 50% of video is visible
-    );
-
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
-
-  const handlePlayPause = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const handlePlayPauseChange = () => {
-    setIsPlaying(!videoRef.current?.paused);
-  };
+  // Generate poster from the video thumbnail (first frame at 0s)
+  // If you have explicit poster images, use item.poster_url instead
+  const posterUrl = item.file_url.replace(/\.(mp4|webm|mov|m4v)$/i, '_poster.jpg');
 
   return (
     <div className="relative bg-black/10">
-      <video
-        ref={videoRef}
+      <OptimizedVideo
         src={item.file_url}
+        poster={posterUrl}
+        alt={item.title ?? 'Gallery video'}
         loop
         muted
         playsInline
+        preload="metadata"
         className="h-auto w-full"
-        onPlay={handlePlayPauseChange}
-        onPause={handlePlayPauseChange}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
       {/* Custom play/pause button overlay */}
       <button
-        onClick={handlePlayPause}
+        onClick={(e) => {
+          e.preventDefault();
+          const video = e.currentTarget.previousElementSibling as HTMLVideoElement;
+          if (video?.paused) {
+            video.play().catch(() => {
+              // Autoplay may be blocked, that's ok
+            });
+          } else {
+            video?.pause();
+          }
+        }}
         className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20"
         aria-label={isPlaying ? 'Pause video' : 'Play video'}
       >

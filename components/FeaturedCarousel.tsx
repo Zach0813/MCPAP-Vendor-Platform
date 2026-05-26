@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { OptimizedVideo } from '@/components/video/OptimizedVideo';
 import type { Database } from '@/types';
 
 /**
@@ -156,12 +157,13 @@ export function FeaturedCarousel() {
         } as React.CSSProperties}
       >
         {currentItem.media_type === 'video' ? (
-          <video
+          <OptimizedVideo
             ref={videoRef}
             src={currentItem.file_url}
             autoPlay
             muted
             playsInline
+            preload="auto"
             className={`h-full w-full object-cover ${fadeState !== 'out' ? 'animate-pan' : 'animate-pan-hold'}`}
             style={{
               objectPosition: currentItem.focal_point
