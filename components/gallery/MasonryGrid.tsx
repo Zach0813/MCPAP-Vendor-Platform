@@ -1,27 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { OptimizedVideo } from '@/components/video/OptimizedVideo';
 import type { MediaGalleryItem } from '@/lib/data/gallery';
 
 /**
  * Video gallery item with smart autoplay — plays only when visible in viewport
- * Uses OptimizedVideo for lazy loading, multiple codecs, and intelligent buffering
+ * Uses optimized codec delivery with multiple formats for compatibility
  */
 function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Generate poster from the video thumbnail (first frame at 0s)
-  // If you have explicit poster images, use item.poster_url instead
   const posterUrl = item.file_url.replace(/\.(mp4|webm|mov|m4v)$/i, '_poster.jpg');
+
+  const handlePlayPause = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {
+        // Autoplay may be blocked, that's ok
+      });
+    } else {
+      video.pause();
+    }
+  };
 
   return (
     <div className="relative bg-black/10">
-      <OptimizedVideo
-        src={item.file_url}
+      <video
+        ref={videoRef}
         poster={posterUrl}
-        alt={item.title ?? 'Gallery video'}
         loop
         muted
         playsInline
@@ -29,20 +39,14 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
         className="h-auto w-full"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-      />
+      >
+        {/* Multiple codec formats: WebM (smaller) + MP4 (fallback) */}
+        <source src={item.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm')} type="video/webm; codecs=vp9,opus" />
+        <source src={item.file_url} type="video/mp4; codecs=h264,aac" />
+      </video>
       {/* Custom play/pause button overlay */}
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          const video = e.currentTarget.previousElementSibling as HTMLVideoElement;
-          if (video?.paused) {
-            video.play().catch(() => {
-              // Autoplay may be blocked, that's ok
-            });
-          } else {
-            video?.pause();
-          }
-        }}
+        onClick={handlePlayPause}
         className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20"
         aria-label={isPlaying ? 'Pause video' : 'Play video'}
       >

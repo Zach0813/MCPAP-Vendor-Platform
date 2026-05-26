@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { OptimizedVideo } from '@/components/video/OptimizedVideo';
 import type { Database } from '@/types';
 
 /**
@@ -157,9 +156,8 @@ export function FeaturedCarousel() {
         } as React.CSSProperties}
       >
         {currentItem.media_type === 'video' ? (
-          <OptimizedVideo
+          <video
             ref={videoRef}
-            src={currentItem.file_url}
             autoPlay
             muted
             playsInline
@@ -173,7 +171,11 @@ export function FeaturedCarousel() {
             onEnded={() => {
               setFadeState('out');
             }}
-          />
+          >
+            {/* Multiple codec formats for broad compatibility */}
+            <source src={currentItem.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm')} type="video/webm; codecs=vp9,opus" />
+            <source src={currentItem.file_url} type="video/mp4; codecs=h264,aac" />
+          </video>
         ) : (
           <img
             src={currentItem.file_url}
