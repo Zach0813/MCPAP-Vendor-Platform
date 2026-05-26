@@ -1,18 +1,13 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { VendorsAdminTable } from '@/components/admin/VendorsAdminTable';
-import { VendorMapEditorWrapper } from '@/components/admin/VendorMapEditorWrapper';
 import { VendorExportButton } from '@/components/admin/VendorExportButton';
 import { VendorImportForm } from '@/components/admin/VendorImportForm';
-import { getCurrentEvent } from '@/lib/data/events';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminVendorsPage() {
   const supabase = await createServerClient();
-  const [vendorsResult, event] = await Promise.all([
-    supabase.from('vendors').select('*').order('name', { ascending: true }),
-    getCurrentEvent(),
-  ]);
+  const vendorsResult = await supabase.from('vendors').select('*').order('name', { ascending: true });
 
   const { data: vendors, error } = vendorsResult;
 
@@ -43,14 +38,6 @@ export default async function AdminVendorsPage() {
                 <VendorExportButton vendors={vendors ?? []} />
               </div>
             </div>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="font-display text-xl font-semibold text-sage-900 mb-3">Position Vendors on Map</h2>
-            <p className="text-sm text-muted dark:text-sage-300 mb-4">
-              Drag pins to set coordinates, or enter lat/lng manually. Set booth size (default 10x10 feet).
-            </p>
-            <VendorMapEditorWrapper vendors={vendors ?? []} eventMapConfig={event?.map_config ?? null} />
           </section>
 
           <section>

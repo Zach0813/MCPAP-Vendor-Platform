@@ -231,8 +231,11 @@ export function VendorImportForm() {
   };
 
   return (
-    <div className="rounded-card border border-border bg-surface p-4 dark:bg-sage-900">
-      <h3 className="font-semibold text-ink dark:text-sage-100 mb-3">Import Vendors from CSV</h3>
+    <div className="rounded-card border border-border bg-surface p-4 flex flex-col">
+      <h3 className="font-semibold text-ink mb-3">Import Vendors from CSV</h3>
+      <p className="text-sm text-muted mb-3 flex-1">
+        Upload a CSV file to import vendors. See column requirements below.
+      </p>
 
       {error ? (
         <p role="alert" className="mb-3 rounded border border-terracotta-300 bg-terracotta-50 p-2 text-sm text-terracotta-800 dark:border-terracotta-700 dark:bg-terracotta-900 dark:text-terracotta-100">
@@ -262,6 +265,10 @@ export function VendorImportForm() {
         </div>
       ) : null}
 
+      <p className="text-xs text-muted mb-3">
+        Expected columns: name, email, phone, category, website, instagram_handle, facebook_handle, tiktok_handle, description, logo_url, featured_photo_url, owner_photo_url (optional), status
+      </p>
+
       <div className="flex gap-2">
         <input
           type="file"
@@ -277,10 +284,6 @@ export function VendorImportForm() {
           {loading ? 'Importing...' : '↑ Import'}
         </Button>
       </div>
-
-      <p className="mt-2 text-xs text-muted dark:text-sage-400">
-        CSV columns: name, owner_name (optional), email, phone, category, website, instagram_handle, facebook_handle, tiktok_handle, description, logo_url, featured_photo_url, owner_photo_url (optional), status
-      </p>
     </div>
   );
 }
