@@ -425,9 +425,13 @@ export function MediaManager() {
                     snapshot.isDraggingOver ? 'bg-sage-50 dark:bg-sage-800 rounded-card p-4' : ''
                   }`}
                 >
-                  {featuredMedia.map((item, index) => (
+                  {featuredMedia.map((item, index) => {
+                    console.log(`🔧 Rendering Draggable for item ${index}:`, item.id);
+                    return (
                     <Draggable key={item.id} draggableId={item.id} index={index}>
-                      {(provided, snapshot) => (
+                      {(provided, snapshot) => {
+                        console.log(`✓ Draggable render function called for index ${index}`);
+                        return (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
@@ -492,9 +496,11 @@ export function MediaManager() {
                             </div>
                           </div>
                         </div>
-                      )}
+                        );
+                      }}
                     </Draggable>
-                  ))}
+                    );
+                  })}
                   {provided.placeholder}
                 </div>
               )}
