@@ -82,9 +82,10 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
         <table className="min-w-full divide-y divide-border text-sm">
           <thead className="bg-sage-50 text-left dark:bg-sage-900">
             <tr>
-              <th className="px-3 py-2 text-ink dark:text-sage-100">Name</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Contact Info</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Category</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Status</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Links</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Change</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Details</th>
               <th className="px-3 py-2 text-right text-ink dark:text-sage-100">Delete</th>
@@ -92,13 +93,78 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
           </thead>
           <tbody className="divide-y divide-border">
             {vendors.map((v) => (
-              <tr key={v.id}>
+              <tr key={v.id} title={v.description || ''}>
                 <td className="px-3 py-3">
-                  <p className="font-medium text-ink">{v.name}</p>
-                  {v.email ? <p className="text-xs text-muted">{v.email}</p> : null}
+                  <div className="space-y-1">
+                    <p className="font-medium text-ink">{v.name}</p>
+                    {v.email && (
+                      <a href={`mailto:${v.email}`} className="text-xs text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100 block truncate">
+                        {v.email}
+                      </a>
+                    )}
+                    {v.phone && (
+                      <a href={`tel:${v.phone}`} className="text-xs text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100 block truncate">
+                        {v.phone}
+                      </a>
+                    )}
+                    {v.description && (
+                      <p className="text-xs text-muted line-clamp-2">{v.description}</p>
+                    )}
+                  </div>
                 </td>
                 <td className="px-3 py-3 capitalize text-ink">{v.category ?? '—'}</td>
                 <td className="px-3 py-3"><StatusBadge status={v.status} /></td>
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    {v.website && (
+                      <a
+                        href={v.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Website"
+                        className="text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100"
+                      >
+                        🌐
+                      </a>
+                    )}
+                    {v.instagram_handle && (
+                      <a
+                        href={`https://instagram.com/${v.instagram_handle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Instagram: @${v.instagram_handle}`}
+                        className="text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100"
+                      >
+                        📸
+                      </a>
+                    )}
+                    {v.facebook_handle && (
+                      <a
+                        href={`https://facebook.com/${v.facebook_handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Facebook: ${v.facebook_handle}`}
+                        className="text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100"
+                      >
+                        f
+                      </a>
+                    )}
+                    {v.tiktok_handle && (
+                      <a
+                        href={`https://tiktok.com/@${v.tiktok_handle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`TikTok: @${v.tiktok_handle}`}
+                        className="text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100"
+                      >
+                        ♪
+                      </a>
+                    )}
+                    {!v.website && !v.instagram_handle && !v.facebook_handle && !v.tiktok_handle && (
+                      <span className="text-xs text-muted">—</span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-3 py-3">
                   <select
                     value={v.status}
