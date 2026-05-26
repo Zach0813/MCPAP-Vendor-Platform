@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import type { Vendor } from '@/types';
 import { VendorModal } from './VendorModal';
 
@@ -28,11 +27,9 @@ export function VendorDirectory({ vendors }: VendorDirectoryProps) {
               {/* Logo/Image */}
               {vendor.logo_url && (
                 <div className="mb-3 h-32 w-full flex items-center justify-center overflow-hidden rounded-card bg-sage-50 dark:bg-sage-800">
-                  <Image
+                  <img
                     src={vendor.logo_url}
                     alt={`${vendor.name} logo`}
-                    width={320}
-                    height={160}
                     className="max-h-32 w-auto object-contain"
                   />
                 </div>
