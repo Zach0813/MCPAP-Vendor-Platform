@@ -24,16 +24,21 @@ export function VendorDirectory({ vendors }: VendorDirectoryProps) {
               onClick={() => setSelectedVendor(vendor)}
               className="w-full h-full rounded-card border border-border bg-surface p-4 shadow-card transition hover:shadow-lg hover:border-sage-300 text-left flex flex-col dark:bg-sage-900 dark:border-sage-700 dark:hover:border-sage-600"
             >
-              {/* Logo/Image */}
-              {vendor.logo_url && (
-                <div className="mb-3 h-32 w-full flex items-center justify-center overflow-hidden rounded-card bg-sage-50 dark:bg-sage-800">
+              {/* Logo/Image or Placeholder */}
+              <div className="mb-3 h-32 w-full flex items-center justify-center overflow-hidden rounded-card bg-sage-50 dark:bg-sage-800">
+                {vendor.logo_url ? (
                   <img
                     src={vendor.logo_url}
                     alt={`${vendor.name} logo`}
                     className="max-h-32 w-auto object-contain"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-sage-400 dark:text-sage-500">
+                    <span className="text-4xl mb-1">🌿</span>
+                    <span className="text-xs font-medium">No image</span>
+                  </div>
+                )}
+              </div>
 
               {/* Vendor Name */}
               <h2 className="font-display text-base font-semibold text-sage-800 dark:text-cream-50">{vendor.name}</h2>
