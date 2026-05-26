@@ -82,6 +82,7 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
         <table className="min-w-full divide-y divide-border text-sm">
           <thead className="bg-sage-50 text-left dark:bg-sage-900">
             <tr>
+              <th className="px-3 py-2 text-ink dark:text-sage-100 w-16">Image</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Contact Info</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Category</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Status</th>
@@ -94,6 +95,29 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
           <tbody className="divide-y divide-border">
             {vendors.map((v) => (
               <tr key={v.id} title={v.description || ''}>
+                <td className="px-3 py-3 text-center">
+                  {v.logo_url ? (
+                    <div className="h-14 w-14 mx-auto flex items-center justify-center overflow-hidden rounded-card bg-sage-50 dark:bg-sage-800 border border-border">
+                      <img
+                        src={v.logo_url}
+                        alt={`${v.name} logo`}
+                        className="max-h-14 max-w-14 object-contain"
+                      />
+                    </div>
+                  ) : v.owner_photo_url ? (
+                    <div className="h-14 w-14 mx-auto flex items-center justify-center overflow-hidden rounded-card bg-sage-50 dark:bg-sage-800 border border-border">
+                      <img
+                        src={v.owner_photo_url}
+                        alt={`${v.name} owner`}
+                        className="h-14 w-14 object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-14 w-14 mx-auto flex items-center justify-center rounded-card bg-sage-50 dark:bg-sage-800 border border-border text-xs text-muted">
+                      —
+                    </div>
+                  )}
+                </td>
                 <td className="px-3 py-3">
                   <div className="space-y-1">
                     <p className="font-medium text-ink">{v.name}</p>
