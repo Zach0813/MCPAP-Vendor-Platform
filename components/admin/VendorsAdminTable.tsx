@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { VendorDetailModal } from './VendorDetailModal';
+import { VendorModal } from '@/components/VendorModal';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { VENDOR_STATUS, type Vendor, type VendorStatus } from '@/types';
 
@@ -260,9 +260,8 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
       </div>
 
       {selectedVendor && (
-        <VendorDetailModal
+        <VendorModal
           vendor={selectedVendor}
-          isOpen={!!selectedVendor}
           onClose={() => setSelectedVendor(null)}
         />
       )}
