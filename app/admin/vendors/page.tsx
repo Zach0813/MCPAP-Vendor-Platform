@@ -16,7 +16,7 @@ export default async function AdminVendorsPage() {
       <header className="mb-6">
         <h1 className="font-display text-3xl font-semibold text-sage-900 dark:text-sage-50">All Vendors</h1>
         <p className="mt-2 text-muted dark:text-sage-300">
-          Update status, edit details, or suspend a vendor. Changes here are immediately visible publicly if status=approved.
+          Manage vendor applications and status. Approved vendors appear on the public directory.
         </p>
       </header>
 
@@ -41,7 +41,10 @@ export default async function AdminVendorsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-sage-900 mb-3">Vendor Details</h2>
+            <h2 className="font-display text-xl font-semibold text-sage-900 dark:text-sage-50 mb-3">Vendor Details</h2>
+            <p className="text-sm text-muted dark:text-sage-300 mb-4">
+              Click on any vendor to view full details. Update status or delete vendors from this list.
+            </p>
             <VendorsAdminTable vendors={vendors ?? []} />
           </section>
         </>

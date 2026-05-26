@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { VendorDetailModal } from './VendorDetailModal';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { VENDOR_STATUS, type Vendor, type VendorStatus } from '@/types';
 
@@ -11,6 +12,7 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
 
   useEffect(() => {
     // Get current user
@@ -84,6 +86,7 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
               <th className="px-3 py-2 text-ink dark:text-sage-100">Category</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Status</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Change</th>
+              <th className="px-3 py-2 text-ink dark:text-sage-100">Details</th>
               <th className="px-3 py-2 text-right text-ink dark:text-sage-100">Delete</th>
             </tr>
           </thead>
@@ -108,6 +111,14 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
+                </td>
+                <td className="px-3 py-3">
+                  <button
+                    onClick={() => setSelectedVendor(v)}
+                    className="text-sm font-medium text-sage-700 hover:text-sage-900 dark:text-sage-300 dark:hover:text-sage-100"
+                  >
+                    View
+                  </button>
                 </td>
                 <td className="px-3 py-3 text-right">
                   {(() => {
@@ -157,6 +168,14 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
           </tbody>
         </table>
       </div>
+
+      {selectedVendor && (
+        <VendorDetailModal
+          vendor={selectedVendor}
+          isOpen={!!selectedVendor}
+          onClose={() => setSelectedVendor(null)}
+        />
+      )}
     </>
   );
 }
