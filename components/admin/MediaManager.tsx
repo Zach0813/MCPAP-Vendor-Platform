@@ -31,6 +31,11 @@ export function MediaManager() {
 
   const supabase = createBrowserClient();
 
+  // DEBUG: Log mount and featured count
+  useEffect(() => {
+    console.log('📦 MediaManager mounted');
+  }, []);
+
   // Load media on mount
   useEffect(() => {
     loadMedia();
@@ -278,10 +283,12 @@ export function MediaManager() {
   }
 
   async function handleDragEnd(result: DropResult) {
+    console.log('🚀 onDragEnd fired:', result);
     const { source, destination, draggableId } = result;
 
     // No-op if dropped outside droppable or same position
     if (!destination || (source.index === destination.index && source.droppableId === destination.droppableId)) {
+      console.log('⏭️ No-op: same position or dropped outside');
       return;
     }
 
