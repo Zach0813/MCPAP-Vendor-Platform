@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import type { Vendor } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -36,11 +35,9 @@ export function VendorModal({ vendor, onClose }: VendorModalProps) {
           {/* Logo */}
           {vendor.logo_url && (
             <div className="flex items-center justify-center overflow-hidden rounded-card bg-sage-50 p-6 dark:bg-sage-800" style={{ minHeight: '300px' }}>
-              <Image
+              <img
                 src={vendor.logo_url}
                 alt={`${vendor.name} logo`}
-                width={400}
-                height={400}
                 className="max-h-72 w-auto object-contain"
               />
             </div>
@@ -80,11 +77,9 @@ export function VendorModal({ vendor, onClose }: VendorModalProps) {
             <div>
               <h3 className="mb-2 font-medium text-sage-900 dark:text-cream-50">Owner</h3>
               <div className="flex items-center justify-center overflow-hidden rounded-card bg-sage-50 p-6 dark:bg-sage-800" style={{ minHeight: '320px' }}>
-                <Image
+                <img
                   src={vendor.owner_photo_url}
                   alt={`${vendor.name} owner`}
-                  width={400}
-                  height={400}
                   className="max-h-80 w-auto object-contain"
                 />
               </div>
@@ -96,11 +91,9 @@ export function VendorModal({ vendor, onClose }: VendorModalProps) {
             <div>
               <h3 className="mb-2 font-medium text-sage-900 dark:text-cream-50">Featured Products</h3>
               <div className="overflow-hidden rounded-card bg-sage-50 dark:bg-sage-800">
-                <Image
+                <img
                   src={vendor.featured_photo_url}
                   alt={`${vendor.name} products`}
-                  width={600}
-                  height={400}
                   className="h-80 w-full object-cover"
                 />
               </div>

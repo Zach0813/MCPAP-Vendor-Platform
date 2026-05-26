@@ -78,9 +78,9 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
           {error}
         </p>
       ) : null}
-      <div className="overflow-x-auto rounded-card border border-border bg-surface">
-        <table className="min-w-full divide-y divide-border text-sm">
-          <thead className="bg-sage-50 text-left dark:bg-sage-900">
+      <div className="overflow-x-auto rounded-card border border-border bg-surface dark:bg-sage-900">
+        <table className="min-w-full divide-y divide-border text-sm dark:divide-sage-700">
+          <thead className="bg-sage-50 text-left dark:bg-sage-800">
             <tr>
               <th className="px-3 py-2 text-ink dark:text-sage-100 w-16">Image</th>
               <th className="px-3 py-2 text-ink dark:text-sage-100">Contact Info</th>
@@ -136,7 +136,7 @@ export function VendorsAdminTable({ vendors }: { vendors: Vendor[] }) {
                     )}
                   </div>
                 </td>
-                <td className="px-3 py-3 capitalize text-ink">{v.category ?? '—'}</td>
+                <td className="px-3 py-3 capitalize text-ink dark:text-cream-50">{v.category ?? '—'}</td>
                 <td className="px-3 py-3"><StatusBadge status={v.status} /></td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2">

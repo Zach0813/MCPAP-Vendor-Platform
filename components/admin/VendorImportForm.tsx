@@ -231,9 +231,9 @@ export function VendorImportForm() {
   };
 
   return (
-    <div className="rounded-card border border-border bg-surface p-4 flex flex-col">
-      <h3 className="font-semibold text-ink mb-3">Import Vendors from CSV</h3>
-      <p className="text-sm text-muted mb-3 flex-1">
+    <div className="rounded-card border border-border bg-surface p-4 flex flex-col dark:bg-sage-900">
+      <h3 className="font-semibold text-ink dark:text-cream-50 mb-3">Import Vendors from CSV</h3>
+      <p className="text-sm text-muted dark:text-sage-300 mb-3 flex-1">
         Upload a CSV file to import vendors. See column requirements below.
       </p>
 
