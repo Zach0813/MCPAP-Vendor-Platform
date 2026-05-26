@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { Vendor } from '@/types';
@@ -13,15 +12,12 @@ interface VendorDetailModalProps {
 
 export function VendorDetailModal({ vendor, isOpen, onClose }: VendorDetailModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal open={isOpen} onClose={onClose} title={vendor.name}>
       <div className="space-y-6 max-h-[80vh] overflow-y-auto">
-        {/* Header */}
-        <div>
-          <h2 className="font-display text-2xl font-semibold text-ink mb-2">{vendor.name}</h2>
-          <div className="flex items-center gap-3">
-            <StatusBadge status={vendor.status} />
-            <span className="text-sm text-muted capitalize">{vendor.category ?? 'No category'}</span>
-          </div>
+        {/* Status and Category */}
+        <div className="flex items-center gap-3">
+          <StatusBadge status={vendor.status} />
+          <span className="text-sm text-muted capitalize">{vendor.category ?? 'No category'}</span>
         </div>
 
         {/* Contact Information */}
