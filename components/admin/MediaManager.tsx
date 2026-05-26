@@ -435,17 +435,15 @@ export function MediaManager() {
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className={`group overflow-hidden rounded-card border-2 transition-all ${
+                          {...provided.dragHandleProps}
+                          className={`group overflow-hidden rounded-card border-2 transition-all cursor-grab active:cursor-grabbing ${
                             snapshot.isDragging
                               ? 'border-sage-500 shadow-lg opacity-95 dark:border-sage-400'
                               : 'border-border dark:border-sage-700'
                           }`}
                         >
-                          {/* Drag Handle */}
-                          <div
-                            {...provided.dragHandleProps}
-                            className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-black/50 text-white rounded px-2 py-1 text-xs font-medium"
-                          >
+                          {/* Visual Drag Indicator */}
+                          <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 text-white rounded px-2 py-1 text-xs font-medium pointer-events-none">
                             ⋮⋮
                           </div>
 
