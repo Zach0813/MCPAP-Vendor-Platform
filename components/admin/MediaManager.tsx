@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FocalPointEditor } from './FocalPointEditor';
@@ -27,14 +26,9 @@ export function MediaManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<MediaItem>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [reorderLoading, setReorderLoading] = useState(false);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   const supabase = createBrowserClient();
-
-  // DEBUG: Log mount and featured count
-  useEffect(() => {
-    console.log('📦 MediaManager mounted');
-  }, []);
 
   // Load media on mount
   useEffect(() => {
@@ -282,29 +276,16 @@ export function MediaManager() {
     }
   }
 
-  async function handleDragEnd(result: DropResult) {
-    console.log('🚀 onDragEnd fired:', result);
-    const { source, destination, draggableId } = result;
+  async function moveUp(id: string, currentIndex: number) {
+    if (currentIndex === 0) return; // Already at top
 
-    // No-op if dropped outside droppable or same position
-    if (!destination || (source.index === destination.index && source.droppableId === destination.droppableId)) {
-      console.log('⏭️ No-op: same position or dropped outside');
-      return;
-    }
-
-    // Only handle featured carousel drops
-    if (destination.droppableId !== 'featured-carousel') {
-      return;
-    }
-
-    setReorderLoading(true);
+    setReorderingId(id);
     setError(null);
 
     try {
-      // Reorder local featured array
+      // Swap with previous item
       const reordered = Array.from(featuredMedia);
-      const [movedItem] = reordered.splice(source.index, 1);
-      reordered.splice(destination.index, 0, movedItem);
+      [reordered[currentIndex - 1], reordered[currentIndex]] = [reordered[currentIndex], reordered[currentIndex - 1]];
 
       // Build API payload: assign featured_order 0, 1, 2, ...
       const updates = reordered.map((item, idx) => ({
@@ -324,15 +305,52 @@ export function MediaManager() {
         throw new Error(data.error || 'Failed to reorder');
       }
 
-      // Reload featured items from DB to confirm persistence
       await loadMedia();
-      setSuccess('Carousel order saved');
-      setTimeout(() => setSuccess(null), 3000);
+      setSuccess('Moved up');
+      setTimeout(() => setSuccess(null), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save order');
-      console.error('Drag reorder failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to move up');
     } finally {
-      setReorderLoading(false);
+      setReorderingId(null);
+    }
+  }
+
+  async function moveDown(id: string, currentIndex: number) {
+    if (currentIndex === featuredMedia.length - 1) return; // Already at bottom
+
+    setReorderingId(id);
+    setError(null);
+
+    try {
+      // Swap with next item
+      const reordered = Array.from(featuredMedia);
+      [reordered[currentIndex], reordered[currentIndex + 1]] = [reordered[currentIndex + 1], reordered[currentIndex]];
+
+      // Build API payload: assign featured_order 0, 1, 2, ...
+      const updates = reordered.map((item, idx) => ({
+        id: item.id,
+        featured_order: idx,
+      }));
+
+      // Call batch reorder endpoint
+      const res = await fetch('/api/admin/media/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: updates }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to reorder');
+      }
+
+      await loadMedia();
+      setSuccess('Moved down');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to move down');
+    } finally {
+      setReorderingId(null);
     }
   }
 
@@ -399,112 +417,100 @@ export function MediaManager() {
         </div>
       )}
 
-      {/* Featured Items Section with Drag-Drop */}
+      {/* Featured Items Section with Arrow Controls */}
       {featuredMedia.length > 0 && (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="rounded-card border border-border bg-surface p-6 dark:bg-sage-900 dark:border-sage-700">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-xl font-semibold text-sage-900 dark:text-cream-50">
-                Carousel Features ({featuredMedia.length})
-              </h2>
-              {reorderLoading && (
-                <div className="text-xs text-muted dark:text-sage-400 animate-pulse">
-                  Saving order...
+        <div className="rounded-card border border-border bg-surface p-6 dark:bg-sage-900 dark:border-sage-700">
+          <h2 className="mb-4 font-display text-xl font-semibold text-sage-900 dark:text-cream-50">
+            Carousel Features ({featuredMedia.length})
+          </h2>
+          <p className="mb-4 text-sm text-muted dark:text-sage-300">
+            Use ↑/↓ buttons to reorder. Items appear in the homepage carousel in this sequence.
+          </p>
+          <div className="space-y-3">
+            {featuredMedia.map((item, index) => (
+              <div key={item.id} className="flex gap-3 items-stretch rounded-card border border-border bg-sage-50 dark:bg-sage-800 dark:border-sage-700 overflow-hidden">
+                {/* Media Thumbnail */}
+                <div className="relative w-24 h-24 flex-shrink-0 bg-sage-100 dark:bg-sage-700">
+                  {item.file_url?.startsWith('http') ? (
+                    item.media_type === 'image' ? (
+                      <Image
+                        src={item.file_url}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <video
+                        src={item.file_url}
+                        className="h-full w-full object-cover"
+                      />
+                    )
+                  ) : (
+                    <div className="flex items-center justify-center h-full w-full text-muted dark:text-sage-400 text-xs">
+                      No image
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <p className="mb-4 text-sm text-muted dark:text-sage-300">
-              Drag items to reorder. They'll appear in the homepage carousel in this sequence.
-            </p>
-            <Droppable droppableId="featured-carousel" type="FEATURED_ITEM">
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 transition-colors ${
-                    snapshot.isDraggingOver ? 'bg-sage-50 dark:bg-sage-800 rounded-card p-4' : ''
-                  }`}
-                >
-                  {featuredMedia.map((item, index) => {
-                    console.log(`🔧 Rendering Draggable for item ${index}:`, item.id);
-                    return (
-                    <Draggable key={item.id} draggableId={item.id} index={index}>
-                      {(provided, snapshot) => {
-                        console.log(`✓ Draggable render function called for index ${index}`);
-                        return (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`group overflow-hidden rounded-card border-2 transition-all cursor-grab active:cursor-grabbing ${
-                            snapshot.isDragging
-                              ? 'border-sage-500 shadow-lg opacity-95 dark:border-sage-400'
-                              : 'border-border dark:border-sage-700'
-                          }`}
-                        >
-                          {/* Visual Drag Indicator */}
-                          <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 text-white rounded px-2 py-1 text-xs font-medium pointer-events-none">
-                            ⋮⋮
-                          </div>
 
-                          {/* Media Preview */}
-                          <div className="relative aspect-video bg-sage-50 dark:bg-sage-800">
-                            {item.file_url?.startsWith('http') ? (
-                              item.media_type === 'image' ? (
-                                <Image
-                                  src={item.file_url}
-                                  alt={item.title}
-                                  fill
-                                  className="object-cover"
-                                />
-                              ) : (
-                                <video
-                                  src={item.file_url}
-                                  className="h-full w-full object-cover"
-                                />
-                              )
-                            ) : (
-                              <div className="flex items-center justify-center h-full w-full bg-sage-100 dark:bg-sage-700 text-muted dark:text-sage-400 text-sm">
-                                Invalid URL
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Card Info */}
-                          <div className="p-3 dark:bg-sage-900 dark:border-t dark:border-sage-700">
-                            <p className="font-medium text-ink dark:text-cream-50 text-sm truncate">{item.title}</p>
-                            <p className="text-xs text-muted dark:text-sage-400">{item.category}</p>
-                            <p className="text-xs text-muted dark:text-sage-500 mt-1">Position: {index + 1}</p>
-                            <div className="mt-2 flex gap-1">
-                              <button
-                                onClick={() => toggleFeatured(item.id, item.featured)}
-                                className="text-xs rounded px-2 py-1 bg-sage-100 text-sage-800 hover:bg-sage-200 dark:bg-sage-700 dark:text-sage-100 dark:hover:bg-sage-600"
-                              >
-                                ★ Unfeature
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditingId(item.id);
-                                  setEditForm(item);
-                                }}
-                                className="text-xs rounded px-2 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
-                              >
-                                Edit
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        );
-                      }}
-                    </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
+                {/* Item Info */}
+                <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+                  <p className="font-medium text-ink dark:text-cream-50 text-sm truncate">{item.title}</p>
+                  <p className="text-xs text-muted dark:text-sage-400">{item.category}</p>
+                  <p className="text-xs text-muted dark:text-sage-500 mt-1">Position {index + 1} of {featuredMedia.length}</p>
                 </div>
-              )}
-            </Droppable>
+
+                {/* Arrow Controls */}
+                <div className="flex flex-col gap-1 p-3 border-l border-border dark:border-sage-700">
+                  <button
+                    onClick={() => moveUp(item.id, index)}
+                    disabled={index === 0 || reorderingId !== null}
+                    className={`px-2 py-1 rounded text-sm font-medium transition ${
+                      index === 0 || reorderingId !== null
+                        ? 'bg-sage-200 text-sage-600 dark:bg-sage-700 dark:text-sage-500 cursor-not-allowed'
+                        : 'bg-sage-100 text-sage-800 hover:bg-sage-200 dark:bg-sage-700 dark:text-sage-100 dark:hover:bg-sage-600'
+                    }`}
+                    title="Move up in carousel order"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => moveDown(item.id, index)}
+                    disabled={index === featuredMedia.length - 1 || reorderingId !== null}
+                    className={`px-2 py-1 rounded text-sm font-medium transition ${
+                      index === featuredMedia.length - 1 || reorderingId !== null
+                        ? 'bg-sage-200 text-sage-600 dark:bg-sage-700 dark:text-sage-500 cursor-not-allowed'
+                        : 'bg-sage-100 text-sage-800 hover:bg-sage-200 dark:bg-sage-700 dark:text-sage-100 dark:hover:bg-sage-600'
+                    }`}
+                    title="Move down in carousel order"
+                  >
+                    ↓
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-1 p-3 border-l border-border dark:border-sage-700">
+                  <button
+                    onClick={() => toggleFeatured(item.id, item.featured)}
+                    disabled={reorderingId !== null}
+                    className="text-xs rounded px-2 py-1 bg-sage-100 text-sage-800 hover:bg-sage-200 dark:bg-sage-700 dark:text-sage-100 dark:hover:bg-sage-600 disabled:opacity-50"
+                  >
+                    Unfeature
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(item.id);
+                      setEditForm(item);
+                    }}
+                    disabled={reorderingId !== null}
+                    className="text-xs rounded px-2 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 disabled:opacity-50"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </DragDropContext>
+        </div>
       )}
 
       {/* All Media Section */}
