@@ -150,9 +150,18 @@ export function MediaManager() {
             mediaId: 'pending', // Will be retrieved from DB
             originalFilename: filename,
           }),
-        }).catch((err) => {
-          console.warn('Conversion request failed (non-critical):', err);
-        });
+        })
+          .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+              console.error('Conversion API error:', res.status, data);
+            } else {
+              console.log('Conversion requested successfully:', data);
+            }
+          })
+          .catch((err) => {
+            console.error('Conversion request failed:', err);
+          });
       }
 
       setTimeout(() => setSuccess(null), 3000);
