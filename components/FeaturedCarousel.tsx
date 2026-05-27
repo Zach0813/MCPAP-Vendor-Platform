@@ -162,14 +162,12 @@ export function FeaturedCarousel() {
             muted
             playsInline
             preload="auto"
+            loop
             className={`h-full w-full object-cover ${fadeState !== 'out' ? 'animate-pan' : 'animate-pan-hold'}`}
             style={{
               objectPosition: currentItem.focal_point
                 ? `${currentItem.focal_point.x}% ${currentItem.focal_point.y}%`
                 : '50% 50%',
-            }}
-            onEnded={() => {
-              setFadeState('out');
             }}
           >
             {/* Try WebM first (smaller), then fall back to original */}
