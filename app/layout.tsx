@@ -3,22 +3,22 @@ import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? ‘http://localhost:3000’),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: ‘Magic City Plant-A-Palooza’,
-    template: ‘%s — Magic City Plant-A-Palooza’,
+    default: "Magic City Plant-A-Palooza",
+    template: "%s — Magic City Plant-A-Palooza",
   },
   description:
-    ‘A plant vendor marketplace with local makers, workshops, music, food, and an outdoor garden celebration.’,
+    "A plant vendor marketplace with local makers, workshops, music, food, and an outdoor garden celebration.",
   openGraph: {
-    title: ‘Magic City Plant-A-Palooza’,
-    description: ‘A plant vendor marketplace with local makers, workshops, music, food, and an outdoor garden celebration.’,
-    type: ‘website’,
-    locale: ‘en_US’,
+    title: "Magic City Plant-A-Palooza",
+    description: "A plant vendor marketplace with local makers, workshops, music, food, and an outdoor garden celebration.",
+    type: "website",
+    locale: "en_US",
   },
   twitter: {
-    card: ‘summary_large_image’,
-    title: ‘Magic City Plant-A-Palooza’,
+    card: "summary_large_image",
+    title: "Magic City Plant-A-Palooza",
   },
 };
 
