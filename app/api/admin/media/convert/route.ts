@@ -181,16 +181,44 @@ export async function POST(request: NextRequest) {
 
   const { mediaId, originalFilename } = parsed.data;
 
+  // Log the request for debugging
+  console.log(`[CONVERT] POST /api/admin/media/convert - mediaId: ${mediaId}, filename: ${originalFilename}`);
+
   try {
     // 3. Fetch media record
+    // Support both UUID (direct lookup) and filename-based (for newly uploaded files)
     const admin = createAdminClient();
-    const { data: media, error: fetchErr } = await admin
-      .from('media')
-      .select('id, file_url, media_type, storage_formats')
-      .eq('id', mediaId)
-      .single();
+    let media;
+    let fetchErr;
+
+    // Check if mediaId is a valid UUID or 'pending' (from new uploads)
+    const isValidUuid = mediaId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+    if (!isValidUuid) {
+      // Look up by filename (for newly uploaded files where mediaId='pending')
+      console.log(`Looking up media by filename: ${originalFilename}`);
+      const result = await admin
+        .from('media')
+        .select('id, file_url, media_type, storage_formats')
+        .ilike('file_url', `%${originalFilename}%`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      media = result.data;
+      fetchErr = result.error;
+    } else {
+      // Direct UUID lookup (if called with explicit mediaId)
+      const result = await admin
+        .from('media')
+        .select('id, file_url, media_type, storage_formats')
+        .eq('id', mediaId)
+        .single();
+      media = result.data;
+      fetchErr = result.error;
+    }
 
     if (fetchErr || !media) {
+      console.warn(`Media not found: mediaId=${mediaId}, filename=${originalFilename}, error=${fetchErr?.message}`);
       return NextResponse.json(
         { error: 'Media not found' },
         { status: 404 }

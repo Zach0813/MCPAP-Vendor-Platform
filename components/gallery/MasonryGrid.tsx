@@ -6,6 +6,7 @@ import type { MediaGalleryItem } from '@/lib/data/gallery';
 
 /**
  * Video gallery item with simple playback controls
+ * Tries WebM first for smaller file sizes, falls back to original
  */
 function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -25,11 +26,13 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
     }
   };
 
+  // Generate WebM path (try it first if it exists)
+  const webmUrl = item.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm');
+
   return (
     <div className="relative bg-black/10">
       <video
         ref={videoRef}
-        src={item.file_url}
         autoPlay
         loop
         muted
@@ -37,7 +40,11 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
         className="h-auto w-full"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-      />
+      >
+        {/* Try WebM first (smaller), then fall back to original */}
+        <source src={webmUrl} type="video/webm" />
+        <source src={item.file_url} type="video/mp4" />
+      </video>
       {/* Custom play/pause button overlay */}
       <button
         onClick={handlePlayPause}

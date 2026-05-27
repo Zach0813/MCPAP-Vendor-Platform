@@ -158,7 +158,6 @@ export function FeaturedCarousel() {
         {currentItem.media_type === 'video' ? (
           <video
             ref={videoRef}
-            src={currentItem.file_url}
             autoPlay
             muted
             playsInline
@@ -172,7 +171,11 @@ export function FeaturedCarousel() {
             onEnded={() => {
               setFadeState('out');
             }}
-          />
+          >
+            {/* Try WebM first (smaller), then fall back to original */}
+            <source src={currentItem.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm')} type="video/webm" />
+            <source src={currentItem.file_url} type="video/mp4" />
+          </video>
         ) : (
           <img
             src={currentItem.file_url}
