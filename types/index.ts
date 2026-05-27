@@ -192,6 +192,10 @@ export type GalleryItem = {
  * focal_point JSONB carries optional zoom (1–3) and videoTime (seconds) for
  * the carousel pan/Ken-Burns effect. Migration 0012 added those keys; older
  * rows may still have just { x, y }.
+ *
+ * storage_formats — array of file formats available on the server. For videos,
+ * this tracks which formats exist (e.g., ['mp4', 'webm']). Used for playback
+ * optimization and admin visibility into available formats.
  */
 export type MediaItem = {
   id: string;
@@ -203,6 +207,7 @@ export type MediaItem = {
   featured: boolean;
   featured_order: number | null;
   focal_point: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+  storage_formats: string[] | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -296,11 +301,12 @@ export type Database = {
       media: {
         Row: MediaItem;
         // Insert: file_url, media_type, title are required. Everything else is either
-        // DB-defaulted (category='general', featured=false, focal_point={x:50,y:50,...},
-        // created_at, updated_at) or nullable (description, featured_order, created_by).
+        // DB-defaulted (category='general', featured=false, storage_formats=[],
+        // focal_point={x:50,y:50,...}, created_at, updated_at) or nullable
+        // (description, featured_order, created_by).
         Insert: Omit<
           MediaItem,
-          'id' | 'created_at' | 'updated_at' | 'description' | 'category' | 'featured' | 'featured_order' | 'focal_point' | 'created_by'
+          'id' | 'created_at' | 'updated_at' | 'description' | 'category' | 'featured' | 'featured_order' | 'focal_point' | 'storage_formats' | 'created_by'
         > & {
           id?: string;
           created_at?: string;
@@ -310,6 +316,7 @@ export type Database = {
           featured?: boolean;
           featured_order?: number | null;
           focal_point?: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+          storage_formats?: string[] | null;
           created_by?: string | null;
         };
         Update: Partial<Omit<MediaItem, 'id'>>;
