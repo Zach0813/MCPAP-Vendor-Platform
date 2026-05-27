@@ -8,6 +8,7 @@ import type { Vendor, VendorCategory, EventMapConfig } from '@/types';
 import { VENDOR_CATEGORY } from '@/types';
 import { VendorPanel } from './VendorPanel';
 import { CategoryFilter } from './CategoryFilter';
+import { ConstructionModal } from './ConstructionModal';
 import { cn } from '@/lib/utils';
 
 interface MapViewProps {
@@ -194,6 +195,7 @@ export function MapView({ vendors, eventMapConfig }: MapViewProps) {
       </div>
       <div ref={containerRef} className="h-full w-full" role="application" aria-label="Vendor map" />
       <VendorPanel vendor={selectedVendor} onClose={() => setSelectedVendor(null)} />
+      <ConstructionModal />
     </div>
   );
 }
