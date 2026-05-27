@@ -82,7 +82,7 @@ async function convertVideoToWebM(
           console.log(`✓ Conversion complete`);
           resolve();
         })
-        .on('progress', (progress) => {
+        .on('progress', (progress: any) => {
           if (progress.percent) {
             console.log(`  Progress: ${Math.round(progress.percent)}%`);
           }
