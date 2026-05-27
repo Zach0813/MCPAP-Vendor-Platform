@@ -5,15 +5,11 @@ import Image from 'next/image';
 import type { MediaGalleryItem } from '@/lib/data/gallery';
 
 /**
- * Video gallery item with smart autoplay — plays only when visible in viewport
- * Uses optimized codec delivery with multiple formats for compatibility
+ * Video gallery item with simple playback controls
  */
 function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-
-  // Generate poster from the video thumbnail (first frame at 0s)
-  const posterUrl = item.file_url.replace(/\.(mp4|webm|mov|m4v)$/i, '_poster.jpg');
 
   const handlePlayPause = () => {
     const video = videoRef.current;
@@ -22,8 +18,10 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
       video.play().catch(() => {
         // Autoplay may be blocked, that's ok
       });
+      setIsPlaying(true);
     } else {
       video.pause();
+      setIsPlaying(false);
     }
   };
 
@@ -31,19 +29,14 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
     <div className="relative bg-black/10">
       <video
         ref={videoRef}
-        poster={posterUrl}
+        src={item.file_url}
         loop
         muted
         playsInline
-        preload="metadata"
         className="h-auto w-full"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-      >
-        {/* Multiple codec formats: WebM (smaller) + MP4 (fallback) */}
-        <source src={item.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm')} type="video/webm; codecs=vp9,opus" />
-        <source src={item.file_url} type="video/mp4; codecs=h264,aac" />
-      </video>
+      />
       {/* Custom play/pause button overlay */}
       <button
         onClick={handlePlayPause}
