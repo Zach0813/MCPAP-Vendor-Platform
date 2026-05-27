@@ -30,14 +30,25 @@ export function MediaManager() {
 
   const supabase = createBrowserClient();
 
-  // Load media on mount and set up periodic refresh for conversion status
+  // Load media on mount and set up silent polling for conversion status
   useEffect(() => {
     loadMedia();
 
-    // Refresh media list every 30 seconds to pick up conversion status changes
+    // Silent background polling: only refresh if there are pending videos
+    // Checks every 60 seconds without user-visible flashing
     const interval = setInterval(() => {
-      loadMedia();
-    }, 30000);
+      setMedia((prevMedia) => {
+        const hasPendingVideos = prevMedia.some(
+          (item) => item.media_type === 'video' && !item.storage_formats?.includes('webm')
+        );
+
+        // Only fetch if there are videos still pending optimization
+        if (hasPendingVideos) {
+          loadMedia();
+        }
+        return prevMedia;
+      });
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
