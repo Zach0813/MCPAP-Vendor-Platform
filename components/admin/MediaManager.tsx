@@ -139,6 +139,22 @@ export function MediaManager() {
 
       console.log('Upload successful!');
       setSuccess('Media uploaded successfully!');
+
+      // Trigger conversion for videos (fire and forget)
+      if (mediaType === 'video') {
+        console.log('Triggering WebM conversion...');
+        fetch('/api/admin/media/convert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mediaId: 'pending', // Will be retrieved from DB
+            originalFilename: filename,
+          }),
+        }).catch((err) => {
+          console.warn('Conversion request failed (non-critical):', err);
+        });
+      }
+
       setTimeout(() => setSuccess(null), 3000);
       await loadMedia();
 
@@ -457,6 +473,19 @@ export function MediaManager() {
                   <p className="font-medium text-ink dark:text-cream-50 text-sm truncate">{item.title}</p>
                   <p className="text-xs text-muted dark:text-sage-400">{item.category}</p>
                   <p className="text-xs text-muted dark:text-sage-500 mt-1">Position {index + 1} of {featuredMedia.length}</p>
+                  {item.media_type === 'video' && (
+                    <div className="mt-2 flex items-center gap-2">
+                      {item.storage_formats?.includes('webm') ? (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100 px-2 py-1 rounded font-medium">
+                          ✓ Optimized
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 px-2 py-1 rounded font-medium">
+                          ⏳ Optimizing
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Arrow Controls */}
@@ -556,9 +585,48 @@ export function MediaManager() {
                   {item.description && (
                     <p className="text-xs text-muted dark:text-sage-400 line-clamp-2">{item.description}</p>
                   )}
-                  <p className="text-xs text-muted dark:text-sage-400 mt-1">
-                    {item.media_type === 'image' ? '🖼️ Image' : '🎬 Video'} • {item.category}
-                  </p>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <p className="text-xs text-muted dark:text-sage-400">
+                      {item.media_type === 'image' ? '🖼️ Image' : '🎬 Video'} • {item.category}
+                    </p>
+                    {item.media_type === 'video' && (
+                      <div className="flex flex-col gap-1">
+                        {/* Storage Formats Display */}
+                        <div className="flex flex-wrap gap-1">
+                          {item.storage_formats?.length ? (
+                            item.storage_formats.map((format) => (
+                              <span
+                                key={format}
+                                className={`text-xs px-2 py-1 rounded font-medium ${
+                                  format.toLowerCase() === 'webm'
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100'
+                                    : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-100'
+                                }`}
+                              >
+                                {format.toUpperCase()}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                              Original
+                            </span>
+                          )}
+                        </div>
+                        {/* Optimization Status */}
+                        <p className="text-xs">
+                          {item.storage_formats?.includes('webm') ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                              ✓ Optimized (WebM available)
+                            </span>
+                          ) : (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                              ⏳ Pending optimization
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
