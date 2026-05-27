@@ -73,9 +73,9 @@ export function EventEditor({ event }: EventEditorProps) {
   const [dateStart, setDateStart] = useState(event.date_start);
   const [dateEnd, setDateEnd] = useState(event.date_end);
 
-  // Pin location state
+  // Pin location state (requires admin to set pin location for event)
   const [pinLocation, setPinLocation] = useState<PinLocation>(
-    event.pin_location || { lat: 33.5186, lng: -86.8104 } // Default to Birmingham, AL
+    event.pin_location || { lat: 0, lng: 0 }
   );
 
   // Map state

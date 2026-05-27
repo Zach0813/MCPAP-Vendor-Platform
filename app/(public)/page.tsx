@@ -5,7 +5,7 @@ import { FeaturedCarousel } from '@/components/FeaturedCarousel';
 import { EventLocationSection } from '@/components/EventLocationSection';
 
 function extractCityState(address: string | null | undefined): string {
-  if (!address) return 'Birmingham, AL';
+  if (!address) return 'our plant party';
   // Extract city and state from address (e.g., "123 Main St, Birmingham, AL 35203" → "Birmingham, AL")
   const parts = address.split(',').map(p => p.trim());
   if (parts.length >= 3) {
@@ -17,30 +17,40 @@ function extractCityState(address: string | null | undefined): string {
 
 // Generate dynamic metadata from current event
 export async function generateMetadata(): Promise<Metadata> {
-  const supabase = await createServerClient();
-  const { data: event } = await supabase
-    .from('events')
-    .select('*')
-    .order('year', { ascending: false })
-    .limit(1)
-    .single();
+  try {
+    const supabase = await createServerClient();
+    const { data: event } = await supabase
+      .from('events')
+      .select('*')
+      .order('year', { ascending: false })
+      .limit(1)
+      .single();
 
-  const cityState = extractCityState(event?.address);
+    const cityState = event?.address ? extractCityState(event.address) : 'our plant party';
+    const description = `${cityState}'s biggest plant party. Vendors, workshops, music, food, and an outdoor garden marketplace.`;
 
-  return {
-    title: 'Magic City Plant-A-Palooza',
-    description: `${cityState}'s biggest plant party. Vendors, workshops, music, food, and an outdoor garden marketplace.`,
-    openGraph: {
+    return {
       title: 'Magic City Plant-A-Palooza',
-      description: `${cityState}'s biggest plant party.`,
-      type: 'website',
-      locale: 'en_US',
-    },
-    twitter: {
-      card: 'summary_large_image',
+      description: description,
+      openGraph: {
+        title: 'Magic City Plant-A-Palooza',
+        description: `${cityState}'s biggest plant party.`,
+        type: 'website',
+        locale: 'en_US',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Magic City Plant-A-Palooza',
+        description: `${cityState}'s biggest plant party.`,
+      },
+    };
+  } catch (error) {
+    // Fallback metadata if database query fails
+    return {
       title: 'Magic City Plant-A-Palooza',
-    },
-  };
+      description: 'A plant vendor marketplace with local makers, workshops, music, food, and an outdoor garden celebration.',
+    };
+  }
 }
 
 export default async function HomePage() {

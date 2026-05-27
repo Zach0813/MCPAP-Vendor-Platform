@@ -41,11 +41,14 @@ export function EventLocationSection({ event }: EventLocationSectionProps) {
   useEffect(() => {
     if (!containerRef.current || !event || mapRef.current || !isMapboxConfigured()) return;
 
+    // Skip map if no pin location is set
+    if (!event.pin_location) return;
+
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Use pin location from event, fallback to Birmingham, AL coordinates
-    const lat = event.pin_location?.lat ?? 33.5186;
-    const lng = event.pin_location?.lng ?? -86.8104;
+    // Use pin location from event (required)
+    const lat = event.pin_location.lat;
+    const lng = event.pin_location.lng;
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
@@ -181,8 +184,13 @@ export function EventLocationSection({ event }: EventLocationSectionProps) {
               <h3 className="font-display text-xl font-semibold text-sage-900 dark:text-cream-50">Visit Us</h3>
               <button
                 onClick={() => {
-                  const eventLat = event.pin_location?.lat ?? 33.5186;
-                  const eventLng = event.pin_location?.lng ?? -86.8104;
+                  if (!event.pin_location) {
+                    alert('Event location not configured');
+                    return;
+                  }
+
+                  const eventLat = event.pin_location.lat;
+                  const eventLng = event.pin_location.lng;
 
                   // Request user's current location for directions
                   if (navigator.geolocation) {
