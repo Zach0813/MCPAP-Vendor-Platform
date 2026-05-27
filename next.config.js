@@ -15,6 +15,8 @@ const nextConfig = {
       },
     ],
   },
+  // FFmpeg packages are server-only and shouldn't be bundled for the client
+  serverExternalPackages: ['fluent-ffmpeg', 'ffmpeg-static'],
   experimental: {
     // Server Actions are enabled by default in Next 14. Keeping this block for future flags.
   },
