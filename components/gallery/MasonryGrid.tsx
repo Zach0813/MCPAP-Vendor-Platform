@@ -30,6 +30,7 @@ function VideoGalleryItem({ item }: { item: MediaGalleryItem }) {
       <video
         ref={videoRef}
         src={item.file_url}
+        autoPlay
         loop
         muted
         playsInline
