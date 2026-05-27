@@ -30,9 +30,16 @@ export function MediaManager() {
 
   const supabase = createBrowserClient();
 
-  // Load media on mount
+  // Load media on mount and set up periodic refresh for conversion status
   useEffect(() => {
     loadMedia();
+
+    // Refresh media list every 30 seconds to pick up conversion status changes
+    const interval = setInterval(() => {
+      loadMedia();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   async function loadMedia() {
@@ -138,11 +145,11 @@ export function MediaManager() {
       }
 
       console.log('Upload successful!');
-      setSuccess('Media uploaded successfully!');
 
       // Trigger conversion for videos (fire and forget)
       if (mediaType === 'video') {
         console.log('Triggering WebM conversion...');
+        setSuccess('Media uploaded! Optimization starting—will show as complete in 5-15 minutes.');
         fetch('/api/admin/media/convert', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -162,6 +169,8 @@ export function MediaManager() {
           .catch((err) => {
             console.error('Conversion request failed:', err);
           });
+      } else {
+        setSuccess('Media uploaded successfully!');
       }
 
       setTimeout(() => setSuccess(null), 3000);
