@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
@@ -12,6 +13,34 @@ function extractCityState(address: string | null | undefined): string {
     return `${parts[1]!}, ${parts[2]!.split(' ')[0]}`;
   }
   return address;
+}
+
+// Generate dynamic metadata from current event
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createServerClient();
+  const { data: event } = await supabase
+    .from('events')
+    .select('*')
+    .order('year', { ascending: false })
+    .limit(1)
+    .single();
+
+  const cityState = extractCityState(event?.address);
+
+  return {
+    title: 'Magic City Plant-A-Palooza',
+    description: `${cityState}'s biggest plant party. Vendors, workshops, music, food, and an outdoor garden marketplace.`,
+    openGraph: {
+      title: 'Magic City Plant-A-Palooza',
+      description: `${cityState}'s biggest plant party.`,
+      type: 'website',
+      locale: 'en_US',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Magic City Plant-A-Palooza',
+    },
+  };
 }
 
 export default async function HomePage() {
