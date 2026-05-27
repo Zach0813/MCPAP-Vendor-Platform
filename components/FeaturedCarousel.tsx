@@ -53,9 +53,10 @@ export function FeaturedCarousel() {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+        console.log(`[Carousel] Loaded ${data?.length || 0} featured items`);
         setItems(data || []);
       } catch (err) {
-        console.error('Failed to fetch featured media items:', err);
+        console.error('[Carousel] Failed to fetch featured media items:', err);
         setItems([]);
       } finally {
         setIsLoading(false);
@@ -87,23 +88,31 @@ export function FeaturedCarousel() {
       const randomDirection = directions[Math.floor(Math.random() * directions.length)]!;
       setPanDirection(randomDirection);
 
+      const itemType = items[currentIndex]?.media_type || 'unknown';
+      console.log(`[Carousel] Starting cycle for item ${currentIndex} (${itemType})`);
+
       // Phase 0: Fade in (0-2s)
       setFadeState('in');
       cyclePhase = 0;
+      console.log(`[Carousel] Phase 0: FADE_IN (0-2s)`);
 
       phaseTimer = setTimeout(() => {
         // Phase 1: Hold (2-7s, 5 second duration)
         setFadeState('hold');
         cyclePhase = 1;
+        console.log(`[Carousel] Phase 1: HOLD (2-7s) - item ${currentIndex}`);
 
         phaseTimer = setTimeout(() => {
           // Phase 2: Fade out (7-9s, 2 second duration)
           setFadeState('out');
           cyclePhase = 2;
+          console.log(`[Carousel] Phase 2: FADE_OUT (7-9s)`);
 
           phaseTimer = setTimeout(() => {
             // Move to next item and restart cycle
-            setCurrentIndex((prev) => (prev + 1) % items.length);
+            const nextIndex = (currentIndex + 1) % items.length;
+            console.log(`[Carousel] Advancing: ${currentIndex} → ${nextIndex}`);
+            setCurrentIndex(nextIndex);
             runCycle();
           }, 2000);
         }, 5000);
@@ -111,22 +120,27 @@ export function FeaturedCarousel() {
     };
 
     // Start the cycle immediately
+    console.log(`[Carousel] Initialized with ${items.length} items, starting cycle`);
     runCycle();
 
     return () => {
+      console.log(`[Carousel] Cleaning up cycle timers`);
       clearTimeout(phaseTimer);
     };
   }, [items.length]);
 
-  // Handle video playback
+  // Handle video playback and track item changes
   useEffect(() => {
     const item = items[currentIndex]!;
     if (!item) return;
 
+    console.log(`[Carousel] Item ${currentIndex}: ${item.media_type} - ${item.title}`);
+
     if (item.media_type === 'video' && videoRef.current) {
+      console.log(`[Carousel] Playing video: ${item.title}`);
       // Ensure video plays when we switch to it
-      videoRef.current.play().catch(() => {
-        // Autoplay may be blocked, that's ok
+      videoRef.current.play().catch((err) => {
+        console.warn(`[Carousel] Video autoplay blocked:`, err);
       });
     }
   }, [currentIndex, items]);
