@@ -5,13 +5,6 @@ import { z } from 'zod';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
-
-// Set FFmpeg path
-if (ffmpegStatic) {
-  ffmpeg.setFfmpegPath(ffmpegStatic);
-}
 
 /**
  * POST /api/admin/media/convert
@@ -49,6 +42,14 @@ async function convertVideoToWebM(
   let outputPath: string | null = null;
 
   try {
+    // Dynamically load FFmpeg (only at runtime, not at build time)
+    const ffmpeg = require('fluent-ffmpeg');
+    const ffmpegStatic = require('ffmpeg-static');
+
+    if (ffmpegStatic) {
+      ffmpeg.setFfmpegPath(ffmpegStatic);
+    }
+
     const webmFilename = originalFilename.replace(/\.(mp4|mov|m4v)$/i, '.webm');
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'video-convert-'));
     inputPath = path.join(tempDir, originalFilename);
