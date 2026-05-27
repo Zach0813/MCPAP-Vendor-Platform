@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Start conversion in background (don't wait)
     console.log(`🎬 Starting conversion: ${originalFilename}`);
-    convertVideoToWebM(media.file_url, originalFilename, mediaId).catch((err) => {
+    convertVideoToWebM(media.file_url, originalFilename, media.id).catch((err) => {
       console.error('Background conversion error:', err);
     });
 
