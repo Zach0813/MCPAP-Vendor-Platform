@@ -23,7 +23,7 @@ import * as os from 'os';
  */
 
 const convertSchema = z.object({
-  mediaId: z.string().uuid('Invalid media ID'),
+  mediaId: z.string().min(1, 'Media ID required'),
   originalFilename: z.string().min(1, 'Filename required'),
 });
 
