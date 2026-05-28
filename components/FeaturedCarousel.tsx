@@ -178,6 +178,8 @@ export function FeaturedCarousel() {
         style={{
           '--pan-end-x': `${panDirection.x}%`,
           '--pan-end-y': `${panDirection.y}%`,
+          '--scale-start': '1.05',
+          '--scale-end': `${currentItem.focal_point?.zoom ?? 1.1}`,
         } as React.CSSProperties}
       >
         {currentItem.media_type === 'video' ? (
@@ -219,10 +221,10 @@ export function FeaturedCarousel() {
       <style jsx>{`
         @keyframes pan {
           from {
-            transform: scale(1.05) translate(0, 0);
+            transform: scale(var(--scale-start)) translate(0, 0);
           }
           to {
-            transform: scale(1.1) translate(var(--pan-end-x), var(--pan-end-y));
+            transform: scale(var(--scale-end)) translate(var(--pan-end-x), var(--pan-end-y));
           }
         }
 
@@ -231,7 +233,7 @@ export function FeaturedCarousel() {
         }
 
         .animate-pan-hold {
-          transform: scale(1.1) translate(var(--pan-end-x), var(--pan-end-y));
+          transform: scale(var(--scale-end)) translate(var(--pan-end-x), var(--pan-end-y));
         }
       `}</style>
     </div>
