@@ -107,18 +107,32 @@ async function convertVideoToWebM(
     }
     console.log(`✓ Uploaded ${(webmData.length / 1024 / 1024).toFixed(2)}MB`);
 
-    // 4. Update storage_formats in database
+    // 4. Delete original file from storage (keep only WebM)
+    console.log(`🗑️  Deleting original file...`);
+    const { error: deleteErr } = await admin.storage
+      .from('media')
+      .remove([originalFilename]);
+
+    if (deleteErr) {
+      console.warn(`Warning: Could not delete original file: ${deleteErr.message}`);
+    } else {
+      console.log(`✓ Deleted original file`);
+    }
+
+    // 5. Update storage_formats and file_url in database to point to WebM
+    const webmFileUrl = media.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm');
     const { error: updateErr } = await admin
       .from('media')
       .update({
-        storage_formats: ['mp4', 'webm'],
+        file_url: webmFileUrl,
+        storage_formats: ['webm'],
       })
       .eq('id', mediaId);
 
     if (updateErr) {
-      console.warn(`Warning: Could not update storage_formats: ${updateErr.message}`);
+      console.warn(`Warning: Could not update database: ${updateErr.message}`);
     } else {
-      console.log(`✓ Updated storage_formats in database`);
+      console.log(`✓ Updated database (file_url now points to WebM)`);
     }
 
     return true;
