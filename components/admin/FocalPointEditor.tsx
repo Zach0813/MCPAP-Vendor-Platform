@@ -61,27 +61,17 @@ export function FocalPointEditor({
   const zoomLevel = focalPoint.zoom || 1.1;
   const videoTime = focalPoint.videoTime || 0;
 
-  const [mediaOffset, setMediaOffset] = useState({ x: 0, y: 0 });
   const [videoDuration, setVideoDuration] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragStartFocalPoint, setDragStartFocalPoint] = useState({ x: focalPoint.x, y: focalPoint.y });
 
   // Update parent whenever ANY platform's focal point changes
   useEffect(() => {
     onFocalPointChange(focalPoints);
   }, [focalPoints, onFocalPointChange]);
 
-  // Update media offset when focal point changes
-  useEffect(() => {
-    if (containerRef.current) {
-      const containerWidth = containerRef.current.offsetWidth;
-      const containerHeight = containerRef.current.offsetHeight;
-      const offsetX = (50 - focalPoint.x) * (containerWidth / 100);
-      const offsetY = (50 - focalPoint.y) * (containerHeight / 100);
-      setMediaOffset({ x: offsetX, y: offsetY });
-    }
-  }, [focalPoint]);
 
   function updateFocalPoint(newFocalPoint: FocalPoint) {
     setFocalPoints(prev => ({
@@ -90,28 +80,10 @@ export function FocalPointEditor({
     }));
   }
 
-  function updateFocalPointFromOffset(offsetX: number, offsetY: number) {
-    if (!containerRef.current) return;
-
-    const containerWidth = containerRef.current.offsetWidth;
-    const containerHeight = containerRef.current.offsetHeight;
-
-    const focalX = 50 - (offsetX / containerWidth) * 100;
-    const focalY = 50 - (offsetY / containerHeight) * 100;
-
-    const newPoint: FocalPoint = {
-      x: Math.max(0, Math.min(100, focalX)),
-      y: Math.max(0, Math.min(100, focalY)),
-      zoom: zoomLevel,
-      videoTime: videoTime,
-    };
-
-    updateFocalPoint(newPoint);
-  }
-
   function handleMediaMouseDown(e: React.MouseEvent) {
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
+    setDragStartFocalPoint({ x: focalPoint.x, y: focalPoint.y }); // Capture focal point at drag start
   }
 
   useEffect(() => {
@@ -122,11 +94,29 @@ export function FocalPointEditor({
 
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
-      if (isDragging) {
+      if (isDragging && containerRef.current) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        setMediaOffset({ x: deltaX, y: deltaY });
-        updateFocalPointFromOffset(deltaX, deltaY);
+
+        const containerWidth = containerRef.current.offsetWidth;
+        const containerHeight = containerRef.current.offsetHeight;
+
+        // Convert pixel drag to focal point percentage change
+        const percentDeltaX = (deltaX / containerWidth) * 100;
+        const percentDeltaY = (deltaY / containerHeight) * 100;
+
+        // Focal point moves opposite to drag direction
+        const newFocalX = Math.max(0, Math.min(100, dragStartFocalPoint.x - percentDeltaX));
+        const newFocalY = Math.max(0, Math.min(100, dragStartFocalPoint.y - percentDeltaY));
+
+        const newPoint: FocalPoint = {
+          x: newFocalX,
+          y: newFocalY,
+          zoom: zoomLevel,
+          videoTime: videoTime,
+        };
+
+        updateFocalPoint(newPoint);
       }
     }
 
@@ -143,7 +133,7 @@ export function FocalPointEditor({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, dragStartFocalPoint, zoomLevel, videoTime]);
 
   function handleVideoTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const time = parseFloat(e.target.value);
@@ -254,13 +244,13 @@ export function FocalPointEditor({
               src={mediaUrl}
               alt="Carousel preview"
               fill
-              className="object-contain cursor-grab active:cursor-grabbing"
+              className="object-cover cursor-grab active:cursor-grabbing"
               draggable={false}
               priority
               onMouseDown={handleMediaMouseDown}
               style={{
-                transform: `translate(${mediaOffset.x}px, ${mediaOffset.y}px) scale(${zoomLevel})`,
-                transformOrigin: 'center',
+                objectPosition: `${focalPoint.x}% ${focalPoint.y}%`,
+                transform: `scale(${zoomLevel})`,
                 animation: 'carouselFade 9s ease-in-out infinite',
                 animationPlayState: isVideoPlaying ? 'running' : 'paused',
                 animationDelay: animationDelay,
@@ -271,14 +261,14 @@ export function FocalPointEditor({
             <video
               ref={videoRef}
               src={mediaUrl}
-              className="w-full h-full object-contain cursor-grab active:cursor-grabbing"
+              className="w-full h-full object-cover cursor-grab active:cursor-grabbing"
               onMouseDown={handleMediaMouseDown}
               onLoadedMetadata={handleVideoLoadedMetadata}
               loop
               muted
               style={{
-                transform: `translate(${mediaOffset.x}px, ${mediaOffset.y}px) scale(${zoomLevel})`,
-                transformOrigin: 'center',
+                objectPosition: `${focalPoint.x}% ${focalPoint.y}%`,
+                transform: `scale(${zoomLevel})`,
                 animation: 'carouselFade 9s ease-in-out infinite',
                 animationPlayState: isVideoPlaying ? 'running' : 'paused',
                 animationDelay: animationDelay,
