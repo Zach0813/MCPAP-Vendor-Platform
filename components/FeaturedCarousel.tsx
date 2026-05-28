@@ -32,6 +32,26 @@ const supabase = createClient<Database>(
  * - Fallback to off-white gradient if no featured items
  * - Positioned as absolute background behind hero content
  */
+
+/**
+ * Get appropriate focal point for current viewport
+ * Handles both single focal point (legacy) and multi-platform format
+ */
+function getFocalPoint(
+  focalPointData: CarouselItem['focal_point']
+): { x: number; y: number; zoom?: number } | null {
+  if (!focalPointData) return null;
+
+  // Check if multi-platform format (has 'desktop' or 'mobile' keys)
+  if ('desktop' in focalPointData || 'mobile' in focalPointData) {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    return isMobile ? focalPointData.mobile : focalPointData.desktop;
+  }
+
+  // Legacy single focal point format
+  return focalPointData as { x: number; y: number; zoom?: number };
+}
+
 export function FeaturedCarousel() {
   const [items, setItems] = useState<CarouselItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -179,7 +199,7 @@ export function FeaturedCarousel() {
           '--pan-end-x': `${panDirection.x}%`,
           '--pan-end-y': `${panDirection.y}%`,
           '--scale-start': '1.05',
-          '--scale-end': `${currentItem.focal_point?.zoom ?? 1.1}`,
+          '--scale-end': `${getFocalPoint(currentItem.focal_point)?.zoom ?? 1.1}`,
         } as React.CSSProperties}
       >
         {currentItem.media_type === 'video' ? (
@@ -193,8 +213,8 @@ export function FeaturedCarousel() {
             loop
             className={`h-full w-full object-cover ${fadeState !== 'out' ? 'animate-pan' : 'animate-pan-hold'}`}
             style={{
-              objectPosition: currentItem.focal_point
-                ? `${currentItem.focal_point.x}% ${currentItem.focal_point.y}%`
+              objectPosition: getFocalPoint(currentItem.focal_point)
+                ? `${getFocalPoint(currentItem.focal_point)?.x}% ${getFocalPoint(currentItem.focal_point)?.y}%`
                 : '50% 50%',
             }}
           >
@@ -209,8 +229,8 @@ export function FeaturedCarousel() {
             alt={currentItem.title}
             className={`h-full w-full object-cover ${fadeState !== 'out' ? 'animate-pan' : 'animate-pan-hold'}`}
             style={{
-              objectPosition: currentItem.focal_point
-                ? `${currentItem.focal_point.x}% ${currentItem.focal_point.y}%`
+              objectPosition: getFocalPoint(currentItem.focal_point)
+                ? `${getFocalPoint(currentItem.focal_point)?.x}% ${getFocalPoint(currentItem.focal_point)?.y}%`
                 : '50% 50%',
             }}
           />

@@ -10,11 +10,13 @@ interface FocalPoint {
   videoTime?: number; // current video timestamp in seconds
 }
 
+type PlatformFocalPoints = Record<Platform, FocalPoint>;
+
 interface FocalPointEditorProps {
   mediaUrl: string;
   mediaType: 'image' | 'video';
-  currentFocalPoint: FocalPoint | null;
-  onFocalPointChange: (point: FocalPoint) => void;
+  currentFocalPoint: FocalPoint | PlatformFocalPoints | null;
+  onFocalPointChange: (point: PlatformFocalPoints) => void;
 }
 
 type Platform = 'desktop' | 'mobile';
@@ -37,12 +39,22 @@ export function FocalPointEditor({
 }: FocalPointEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const defaultFocalPoint = currentFocalPoint || { x: 50, y: 50, zoom: 1.1, videoTime: 0 };
+
+  // Detect if currentFocalPoint is single or multi-platform format
+  const isMultiPlatform = currentFocalPoint && 'desktop' in currentFocalPoint;
+
+  const defaultDesktopPoint = isMultiPlatform
+    ? (currentFocalPoint as PlatformFocalPoints).desktop
+    : (currentFocalPoint as FocalPoint) || { x: 50, y: 50, zoom: 1.1, videoTime: 0 };
+
+  const defaultMobilePoint = isMultiPlatform
+    ? (currentFocalPoint as PlatformFocalPoints).mobile
+    : { x: 50, y: 50, zoom: 1.15, videoTime: 0 };
 
   const [platform, setPlatform] = useState<Platform>('desktop');
-  const [focalPoints, setFocalPoints] = useState<Record<Platform, FocalPoint>>({
-    desktop: defaultFocalPoint,
-    mobile: currentFocalPoint || { x: 50, y: 50, zoom: 1.15, videoTime: 0 },
+  const [focalPoints, setFocalPoints] = useState<PlatformFocalPoints>({
+    desktop: defaultDesktopPoint,
+    mobile: defaultMobilePoint,
   });
 
   const focalPoint = focalPoints[platform];
@@ -55,10 +67,10 @@ export function FocalPointEditor({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // Update parent when focal point changes
+  // Update parent whenever ANY platform's focal point changes
   useEffect(() => {
-    onFocalPointChange(focalPoint);
-  }, [focalPoint]);
+    onFocalPointChange(focalPoints);
+  }, [focalPoints, onFocalPointChange]);
 
   // Update media offset when focal point changes
   useEffect(() => {
@@ -275,27 +287,21 @@ export function FocalPointEditor({
             />
           )}
 
-          {/* Viewport Frame — shows visible area */}
-          <div className="absolute inset-0 pointer-events-none">
-            {/* White frame border */}
-            <div
-              className="absolute border-2 border-white opacity-75 transition-all duration-100"
-              style={{
-                left: `${frameLeft}%`,
-                top: `${frameTop}%`,
-                width: `${visiblePercentage}%`,
-                height: `${visiblePercentage}%`,
-                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
-              }}
-            />
-            {/* Focal point marker positioned at actual focal point */}
-            <div
-              className="absolute w-4 h-4 border-2 border-red-400 rounded-full opacity-70 transform -translate-x-1/2 -translate-y-1/2"
-              style={{
-                left: `${focalPoint.x}%`,
-                top: `${focalPoint.y}%`,
-              }}
-            />
+          {/* Viewport Frame with Focal Point — single element for no lag */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: `${frameLeft}%`,
+              top: `${frameTop}%`,
+              width: `${visiblePercentage}%`,
+              height: `${visiblePercentage}%`,
+              border: '2px solid white',
+              opacity: 0.75,
+              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            {/* Focal point marker at center of frame */}
+            <div className="absolute top-1/2 left-1/2 w-4 h-4 border-2 border-red-400 rounded-full opacity-70 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
 
           {/* Rule of thirds grid */}
