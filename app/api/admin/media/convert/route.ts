@@ -31,13 +31,14 @@ type ConvertPayload = z.infer<typeof convertSchema>;
 
 /**
  * Convert video to WebM using FFmpeg
- * Downloads from Supabase, converts, uploads back
+ * Downloads from Supabase, converts, uploads back, and updates database
  */
 async function convertVideoToWebM(
   fileUrl: string,
   originalFilename: string,
   mediaId: string
 ): Promise<boolean> {
+  const admin = createAdminClient();
   let inputPath: string | null = null;
   let outputPath: string | null = null;
 
@@ -92,7 +93,6 @@ async function convertVideoToWebM(
 
     // 3. Upload converted WebM to Supabase
     console.log(`📤 Uploading WebM version...`);
-    const admin = createAdminClient();
     const webmData = await fs.readFile(outputPath);
 
     const { error: uploadErr } = await admin.storage
@@ -119,8 +119,8 @@ async function convertVideoToWebM(
       console.log(`✓ Deleted original file`);
     }
 
-    // 5. Update storage_formats and file_url in database to point to WebM
-    const webmFileUrl = media.file_url.replace(/\.(mp4|mov|m4v)$/i, '.webm');
+    // 5. Update database: file_url now points to WebM, storage_formats = ['webm']
+    const webmFileUrl = fileUrl.replace(/\.(mp4|mov|m4v)$/i, '.webm');
     const { error: updateErr } = await admin
       .from('media')
       .update({
