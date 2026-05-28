@@ -40,7 +40,7 @@ export function FeaturedCarousel() {
   const [panDirection, setPanDirection] = useState({ x: -3, y: 3 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
 
   // Fetch featured media items
   useEffect(() => {
@@ -72,6 +72,10 @@ export function FeaturedCarousel() {
     if (items.length === 0) return;
 
     const runCycle = (index: number) => {
+      // Clear any pending timers from previous cycle
+      timersRef.current.forEach((timer) => clearTimeout(timer));
+      timersRef.current = [];
+
       // Randomize pan direction for this cycle
       const directions = [
         { x: -3, y: 3 },
@@ -94,24 +98,27 @@ export function FeaturedCarousel() {
       setFadeState('in');
       console.log(`[Carousel] Phase 0: FADE_IN (0-2s) for item ${index}`);
 
-      timerRef.current = setTimeout(() => {
+      let timer1 = setTimeout(() => {
         // Phase 1: Hold (2-7s, 5 second duration)
         setFadeState('hold');
         console.log(`[Carousel] Phase 1: HOLD (2-7s) - item ${index}`);
 
-        timerRef.current = setTimeout(() => {
+        let timer2 = setTimeout(() => {
           // Phase 2: Fade out (7-9s, 2 second duration)
           setFadeState('out');
           console.log(`[Carousel] Phase 2: FADE_OUT (7-9s) - item ${index}`);
 
-          timerRef.current = setTimeout(() => {
+          let timer3 = setTimeout(() => {
             // Move to next item and restart cycle
             const nextIndex = (index + 1) % items.length;
             console.log(`[Carousel] Advancing: ${index} → ${nextIndex}`);
             setCurrentIndex(nextIndex);
           }, 2000);
+          timersRef.current.push(timer3);
         }, 5000);
+        timersRef.current.push(timer2);
       }, 2000);
+      timersRef.current.push(timer1);
     };
 
     // Start the cycle immediately with current index
@@ -119,8 +126,9 @@ export function FeaturedCarousel() {
     runCycle(currentIndex);
 
     return () => {
-      console.log(`[Carousel] Cleaning up timers`);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      console.log(`[Carousel] Cleaning up timers (${timersRef.current.length} total)`);
+      timersRef.current.forEach((timer) => clearTimeout(timer));
+      timersRef.current = [];
     };
   }, [items.length, currentIndex]);
 
