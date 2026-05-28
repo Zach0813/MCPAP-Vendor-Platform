@@ -48,11 +48,21 @@ function getFocalPoint(
   // Check if multi-platform format (has both 'desktop' and 'mobile' keys)
   if ('desktop' in focalPointData && 'mobile' in focalPointData) {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    return isMobile ? focalPointData.mobile : focalPointData.desktop;
+    const point = isMobile ? focalPointData.mobile : focalPointData.desktop;
+
+    // Ensure zoom has a sensible default
+    return {
+      ...point,
+      zoom: point.zoom && point.zoom > 0 ? point.zoom : (isMobile ? 1.15 : 1.1),
+    };
   }
 
   // Legacy single focal point format
-  return focalPointData as FocalPoint;
+  const legacyPoint = focalPointData as FocalPoint;
+  return {
+    ...legacyPoint,
+    zoom: legacyPoint.zoom && legacyPoint.zoom > 0 ? legacyPoint.zoom : 1.1,
+  };
 }
 
 export function FeaturedCarousel() {
