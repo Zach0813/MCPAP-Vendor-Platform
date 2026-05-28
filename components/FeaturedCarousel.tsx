@@ -131,6 +131,14 @@ export function FeaturedCarousel() {
 
     console.log(`[Carousel] Displaying item ${currentIndex}: ${item.media_type} - ${item.title}`);
 
+    // Reset video when switching items
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      console.log(`[Carousel] Reset video element`);
+    }
+
+    // Play new video if needed
     if (item.media_type === 'video' && videoRef.current) {
       console.log(`[Carousel] Playing video: ${item.title}`);
       // Ensure video plays when we switch to it
