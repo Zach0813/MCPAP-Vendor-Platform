@@ -182,6 +182,7 @@ export function FeaturedCarousel() {
       >
         {currentItem.media_type === 'video' ? (
           <video
+            key={`video-${currentItem.id}`}
             ref={videoRef}
             autoPlay
             muted
@@ -201,6 +202,7 @@ export function FeaturedCarousel() {
           </video>
         ) : (
           <img
+            key={`img-${currentItem.id}`}
             src={currentItem.file_url}
             alt={currentItem.title}
             className={`h-full w-full object-cover ${fadeState !== 'out' ? 'animate-pan' : 'animate-pan-hold'}`}
