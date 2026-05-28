@@ -40,6 +40,7 @@ export function FeaturedCarousel() {
   const [panDirection, setPanDirection] = useState({ x: -3, y: 3 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout>();
 
   // Fetch featured media items
   useEffect(() => {
@@ -70,10 +71,7 @@ export function FeaturedCarousel() {
   useEffect(() => {
     if (items.length === 0) return;
 
-    let cyclePhase = 0; // 0: fade-in, 1: hold, 2: fade-out
-    let phaseTimer: NodeJS.Timeout;
-
-    const runCycle = () => {
+    const runCycle = (index: number) => {
       // Randomize pan direction for this cycle
       const directions = [
         { x: -3, y: 3 },
@@ -88,53 +86,50 @@ export function FeaturedCarousel() {
       const randomDirection = directions[Math.floor(Math.random() * directions.length)]!;
       setPanDirection(randomDirection);
 
-      const itemType = items[currentIndex]?.media_type || 'unknown';
-      console.log(`[Carousel] Starting cycle for item ${currentIndex} (${itemType})`);
+      const itemType = items[index]?.media_type || 'unknown';
+      const itemTitle = items[index]?.title || 'unknown';
+      console.log(`[Carousel] Starting cycle for item ${index} (${itemType}) - ${itemTitle}`);
 
       // Phase 0: Fade in (0-2s)
       setFadeState('in');
-      cyclePhase = 0;
-      console.log(`[Carousel] Phase 0: FADE_IN (0-2s)`);
+      console.log(`[Carousel] Phase 0: FADE_IN (0-2s) for item ${index}`);
 
-      phaseTimer = setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         // Phase 1: Hold (2-7s, 5 second duration)
         setFadeState('hold');
-        cyclePhase = 1;
-        console.log(`[Carousel] Phase 1: HOLD (2-7s) - item ${currentIndex}`);
+        console.log(`[Carousel] Phase 1: HOLD (2-7s) - item ${index}`);
 
-        phaseTimer = setTimeout(() => {
+        timerRef.current = setTimeout(() => {
           // Phase 2: Fade out (7-9s, 2 second duration)
           setFadeState('out');
-          cyclePhase = 2;
-          console.log(`[Carousel] Phase 2: FADE_OUT (7-9s)`);
+          console.log(`[Carousel] Phase 2: FADE_OUT (7-9s) - item ${index}`);
 
-          phaseTimer = setTimeout(() => {
+          timerRef.current = setTimeout(() => {
             // Move to next item and restart cycle
-            const nextIndex = (currentIndex + 1) % items.length;
-            console.log(`[Carousel] Advancing: ${currentIndex} → ${nextIndex}`);
+            const nextIndex = (index + 1) % items.length;
+            console.log(`[Carousel] Advancing: ${index} → ${nextIndex}`);
             setCurrentIndex(nextIndex);
-            runCycle();
           }, 2000);
         }, 5000);
       }, 2000);
     };
 
-    // Start the cycle immediately
-    console.log(`[Carousel] Initialized with ${items.length} items, starting cycle`);
-    runCycle();
+    // Start the cycle immediately with current index
+    console.log(`[Carousel] Initialized with ${items.length} items, starting at index ${currentIndex}`);
+    runCycle(currentIndex);
 
     return () => {
-      console.log(`[Carousel] Cleaning up cycle timers`);
-      clearTimeout(phaseTimer);
+      console.log(`[Carousel] Cleaning up timers`);
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [items.length]);
+  }, [items.length, currentIndex]);
 
   // Handle video playback and track item changes
   useEffect(() => {
-    const item = items[currentIndex]!;
+    const item = items[currentIndex];
     if (!item) return;
 
-    console.log(`[Carousel] Item ${currentIndex}: ${item.media_type} - ${item.title}`);
+    console.log(`[Carousel] Displaying item ${currentIndex}: ${item.media_type} - ${item.title}`);
 
     if (item.media_type === 'video' && videoRef.current) {
       console.log(`[Carousel] Playing video: ${item.title}`);
