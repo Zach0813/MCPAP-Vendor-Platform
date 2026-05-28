@@ -288,8 +288,14 @@ export function FocalPointEditor({
                 boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
               }}
             />
-            {/* Focal point marker at center */}
-            <div className="absolute top-1/2 left-1/2 w-4 h-4 border-2 border-red-400 rounded-full opacity-70 transform -translate-x-1/2 -translate-y-1/2" />
+            {/* Focal point marker positioned at actual focal point */}
+            <div
+              className="absolute w-4 h-4 border-2 border-red-400 rounded-full opacity-70 transform -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${focalPoint.x}%`,
+                top: `${focalPoint.y}%`,
+              }}
+            />
           </div>
 
           {/* Rule of thirds grid */}
