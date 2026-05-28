@@ -189,12 +189,10 @@ export function FocalPointEditor({
   // At zoom 1.1, ~90.9% of the image is visible. At zoom 1.3, ~76.9% is visible.
   const visiblePercentage = 100 / zoomLevel;
 
-  // Frame position (centered on focal point, clamped to bounds)
-  const frameHalfWidth = visiblePercentage / 2;
-  const frameHalfHeight = visiblePercentage / 2;
-
-  const frameLeft = Math.max(0, Math.min(100 - visiblePercentage, focalPoint.x - frameHalfWidth));
-  const frameTop = Math.max(0, Math.min(100 - visiblePercentage, focalPoint.y - frameHalfHeight));
+  // Frame always centered on focal point (no clamping - frame may extend past image edges)
+  const frameHalfSize = visiblePercentage / 2;
+  const frameLeft = focalPoint.x - frameHalfSize;
+  const frameTop = focalPoint.y - frameHalfSize;
 
   return (
     <div className="space-y-4 rounded-card border border-border bg-sage-50 p-4 dark:bg-sage-800 dark:border-sage-700">
