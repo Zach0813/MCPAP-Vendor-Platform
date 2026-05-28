@@ -17,10 +17,17 @@ interface FocalPointEditorProps {
   onFocalPointChange: (point: FocalPoint) => void;
 }
 
+type Platform = 'desktop' | 'mobile';
+
+const PLATFORM_ASPECTS = {
+  desktop: 16 / 9,
+  mobile: 9 / 16,
+};
+
 /**
  * Focal point editor for images and videos
- * Click or drag the crosshair to set the focal point
- * Shows 16:9 carousel preview with darkened edges
+ * Shows viewport frame representing visible carousel area
+ * Desktop/mobile preview toggle to set focal points independently per platform
  */
 export function FocalPointEditor({
   mediaUrl,
@@ -30,31 +37,53 @@ export function FocalPointEditor({
 }: FocalPointEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const defaultFocalPoint = currentFocalPoint || { x: 50, y: 50, zoom: 1, videoTime: 0 };
-  const [focalPoint, setFocalPoint] = useState<FocalPoint>(defaultFocalPoint);
+  const defaultFocalPoint = currentFocalPoint || { x: 50, y: 50, zoom: 1.1, videoTime: 0 };
 
-  // Calculate initial media offset from focal point
-  // Reverse formula: offsetX = (50 - focalX) * (containerWidth / 100)
-  const [mediaOffset, setMediaOffset] = useState(() => {
-    // We'll calculate this properly in useEffect once container is available
-    return { x: 0, y: 0 };
+  const [platform, setPlatform] = useState<Platform>('desktop');
+  const [focalPoints, setFocalPoints] = useState<Record<Platform, FocalPoint>>({
+    desktop: defaultFocalPoint,
+    mobile: currentFocalPoint || { x: 50, y: 50, zoom: 1.15, videoTime: 0 },
   });
+
+  const focalPoint = focalPoints[platform];
+  const zoomLevel = focalPoint.zoom || 1.1;
+  const videoTime = focalPoint.videoTime || 0;
+
+  const [mediaOffset, setMediaOffset] = useState({ x: 0, y: 0 });
   const [videoDuration, setVideoDuration] = useState(0);
-  const [videoTime, setVideoTime] = useState((currentFocalPoint?.videoTime as number) || 0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [zoomLevel, setZoomLevel] = useState((currentFocalPoint?.zoom as number) || 1);
+
+  // Update parent when focal point changes
+  useEffect(() => {
+    onFocalPointChange(focalPoint);
+  }, [focalPoint]);
+
+  // Update media offset when focal point changes
+  useEffect(() => {
+    if (containerRef.current) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const containerHeight = containerRef.current.offsetHeight;
+      const offsetX = (50 - focalPoint.x) * (containerWidth / 100);
+      const offsetY = (50 - focalPoint.y) * (containerHeight / 100);
+      setMediaOffset({ x: offsetX, y: offsetY });
+    }
+  }, [focalPoint]);
+
+  function updateFocalPoint(newFocalPoint: FocalPoint) {
+    setFocalPoints(prev => ({
+      ...prev,
+      [platform]: newFocalPoint
+    }));
+  }
 
   function updateFocalPointFromOffset(offsetX: number, offsetY: number) {
-    // Convert pixel offset to focal point percentage (0-100)
-    // Positive offset = moving media right/down = focal point shifts left/up
     if (!containerRef.current) return;
 
     const containerWidth = containerRef.current.offsetWidth;
     const containerHeight = containerRef.current.offsetHeight;
 
-    // Calculate focal point based on media position
     const focalX = 50 - (offsetX / containerWidth) * 100;
     const focalY = 50 - (offsetY / containerHeight) * 100;
 
@@ -65,8 +94,7 @@ export function FocalPointEditor({
       videoTime: videoTime,
     };
 
-    setFocalPoint(newPoint);
-    onFocalPointChange(newPoint);
+    updateFocalPoint(newPoint);
   }
 
   function handleMediaMouseDown(e: React.MouseEvent) {
@@ -80,31 +108,11 @@ export function FocalPointEditor({
     }
   }, [videoTime]);
 
-  // When focal point changes (e.g., opening edit modal), calculate the media offset needed
-  useEffect(() => {
-    if (containerRef.current && currentFocalPoint) {
-      const containerWidth = containerRef.current.offsetWidth;
-      const containerHeight = containerRef.current.offsetHeight;
-
-      // Reverse the focal point calculation to get media offset
-      // Original: focalX = 50 - (offsetX / containerWidth) * 100
-      // Reverse: offsetX = (50 - focalX) * (containerWidth / 100)
-      const offsetX = (50 - currentFocalPoint.x) * (containerWidth / 100);
-      const offsetY = (50 - currentFocalPoint.y) * (containerHeight / 100);
-
-      setMediaOffset({ x: offsetX, y: offsetY });
-      setFocalPoint(currentFocalPoint);
-      setZoomLevel((currentFocalPoint.zoom as number) || 1);
-      setVideoTime((currentFocalPoint.videoTime as number) || 0);
-    }
-  }, [currentFocalPoint]);
-
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
       if (isDragging) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-
         setMediaOffset({ x: deltaX, y: deltaY });
         updateFocalPointFromOffset(deltaX, deltaY);
       }
@@ -127,20 +135,16 @@ export function FocalPointEditor({
 
   function handleVideoTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const time = parseFloat(e.target.value);
-    setVideoTime(time);
-    setIsVideoPlaying(false);
-    // Pause video while scrubbing so user can see the exact frame
     if (videoRef.current) {
       videoRef.current.pause();
     }
-    // Sync video time change to parent
     const newPoint: FocalPoint = {
       x: focalPoint.x,
       y: focalPoint.y,
       zoom: zoomLevel,
       videoTime: time,
     };
-    onFocalPointChange(newPoint);
+    updateFocalPoint(newPoint);
   }
 
   function handlePlayPreview() {
@@ -159,85 +163,86 @@ export function FocalPointEditor({
 
   function handleZoomChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newZoom = parseFloat(e.target.value);
-    setZoomLevel(newZoom);
-    // Sync zoom change to parent
     const newPoint: FocalPoint = {
       x: focalPoint.x,
       y: focalPoint.y,
       zoom: newZoom,
       videoTime: videoTime,
     };
-    onFocalPointChange(newPoint);
-  }
-
-  function handleAlignHorizontal() {
-    // Center horizontally (x = 50) while keeping vertical position
-    if (!containerRef.current) return;
-    const containerWidth = containerRef.current.offsetWidth;
-    const offsetX = (50 - 50) * (containerWidth / 100);
-    setMediaOffset({ x: offsetX, y: mediaOffset.y });
-    updateFocalPointFromOffset(offsetX, mediaOffset.y);
-  }
-
-  function handleAlignVertical() {
-    // Center vertically (y = 50) while keeping horizontal position
-    if (!containerRef.current) return;
-    const containerHeight = containerRef.current.offsetHeight;
-    const offsetY = (50 - 50) * (containerHeight / 100);
-    setMediaOffset({ x: mediaOffset.x, y: offsetY });
-    updateFocalPointFromOffset(mediaOffset.x, offsetY);
+    updateFocalPoint(newPoint);
   }
 
   function handleVideoLoadedMetadata(e: React.SyntheticEvent<HTMLVideoElement>) {
     setVideoDuration(e.currentTarget.duration);
   }
 
-  function handleVideoError(e: React.SyntheticEvent<HTMLVideoElement>) {
-    console.error('Video error:', e.currentTarget.error?.code, e.currentTarget.error?.message);
+  function handlePlatformChange(newPlatform: Platform) {
+    setPlatform(newPlatform);
+    setIsVideoPlaying(false);
   }
 
-  // For images, pause animation at the hold portion (middle of 5s hold = 4.5s into 9s cycle)
-  // For videos, animation always starts from beginning of fade-in (0s) when paused
   const animationDelay = mediaType === 'image' ? '-4.5s' : '0s';
+  const aspectRatio = PLATFORM_ASPECTS[platform];
 
-  // Calculate 16:9 preview box dimensions
-  const CAROUSEL_ASPECT = 16 / 9; // 1.778
-  const imageWidth = 100;
-  const imageHeight = 100;
+  // Calculate viewport frame dimensions
+  // The frame represents what portion of the original image is visible at the current zoom level
+  // At zoom 1.1, ~90.9% of the image is visible. At zoom 1.3, ~76.9% is visible.
+  const visiblePercentage = 100 / zoomLevel;
 
-  // Calculate preview box size (fit 16:9 within the image bounds)
-  let previewWidth = imageWidth;
-  let previewHeight = previewWidth / CAROUSEL_ASPECT;
+  // Frame position (centered on focal point, clamped to bounds)
+  const frameHalfWidth = visiblePercentage / 2;
+  const frameHalfHeight = visiblePercentage / 2;
 
-  if (previewHeight > imageHeight) {
-    previewHeight = imageHeight;
-    previewWidth = previewHeight * CAROUSEL_ASPECT;
-  }
-
-  // Center the preview box on the focal point
-  const previewLeft = Math.max(0, Math.min(100 - previewWidth, focalPoint.x - previewWidth / 2));
-  const previewTop = Math.max(0, Math.min(100 - previewHeight, focalPoint.y - previewHeight / 2));
+  const frameLeft = Math.max(0, Math.min(100 - visiblePercentage, focalPoint.x - frameHalfWidth));
+  const frameTop = Math.max(0, Math.min(100 - visiblePercentage, focalPoint.y - frameHalfHeight));
 
   return (
     <div className="space-y-4 rounded-card border border-border bg-sage-50 p-4 dark:bg-sage-800 dark:border-sage-700">
       <div>
-        <label className="block text-sm font-medium text-ink dark:text-cream-50 mb-2">
-          Focal Point Editor
-        </label>
+        <div className="flex items-center justify-between mb-3">
+          <label className="block text-sm font-medium text-ink dark:text-cream-50">
+            Focal Point Editor
+          </label>
+
+          {/* Platform Toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePlatformChange('desktop')}
+              className={`text-xs px-3 py-1 rounded font-medium transition-colors ${
+                platform === 'desktop'
+                  ? 'bg-blue-200 text-blue-900 dark:bg-blue-900 dark:text-blue-100'
+                  : 'bg-sage-200 text-sage-800 hover:bg-sage-300 dark:bg-sage-700 dark:text-sage-100 dark:hover:bg-sage-600'
+              }`}
+            >
+              Desktop 16:9
+            </button>
+            <button
+              onClick={() => handlePlatformChange('mobile')}
+              className={`text-xs px-3 py-1 rounded font-medium transition-colors ${
+                platform === 'mobile'
+                  ? 'bg-blue-200 text-blue-900 dark:bg-blue-900 dark:text-blue-100'
+                  : 'bg-sage-200 text-sage-800 hover:bg-sage-300 dark:bg-sage-700 dark:text-sage-100 dark:hover:bg-sage-600'
+              }`}
+            >
+              Mobile 9:16
+            </button>
+          </div>
+        </div>
+
         <p className="text-xs text-muted dark:text-sage-400 mb-3">
-          Click or drag the crosshair to position the focal point. The highlighted box shows what appears in the 16:9 carousel.
+          Drag to reposition. The <span className="font-medium">white frame</span> shows what's visible in the {platform === 'desktop' ? '16:9 desktop' : '9:16 mobile'} carousel at this zoom level. Set focal points independently for each platform.
         </p>
 
-        {/* 16:9 Preview Container - matches carousel aspect ratio */}
+        {/* Carousel Preview Container */}
         <div
           ref={containerRef}
           className="relative bg-sage-900 dark:bg-sage-950 rounded-card overflow-hidden border-2 border-dashed border-sage-500 dark:border-sage-600"
-          style={{ aspectRatio: '16/9' }}
+          style={{ aspectRatio: `${aspectRatio}` }}
         >
           {mediaType === 'image' ? (
             <Image
               src={mediaUrl}
-              alt="Carousel preview - drag to reposition"
+              alt="Carousel preview"
               fill
               className="object-contain cursor-grab active:cursor-grabbing"
               draggable={false}
@@ -259,7 +264,6 @@ export function FocalPointEditor({
               className="w-full h-full object-contain cursor-grab active:cursor-grabbing"
               onMouseDown={handleMediaMouseDown}
               onLoadedMetadata={handleVideoLoadedMetadata}
-              onError={handleVideoError}
               loop
               muted
               style={{
@@ -273,31 +277,37 @@ export function FocalPointEditor({
             />
           )}
 
-          {/* Center crosshairs showing focal point */}
+          {/* Viewport Frame — shows visible area */}
           <div className="absolute inset-0 pointer-events-none">
-            {/* Vertical center line */}
-            <div className="absolute top-0 left-1/2 w-0.5 h-full bg-gradient-to-b from-transparent via-cream-100 dark:via-sage-400 to-transparent opacity-60 transform -translate-x-1/2" />
-            {/* Horizontal center line */}
-            <div className="absolute top-1/2 left-0 h-0.5 w-full bg-gradient-to-r from-transparent via-cream-100 dark:via-sage-400 to-transparent opacity-60 transform -translate-y-1/2" />
-            {/* Center circle indicator */}
-            <div className="absolute top-1/2 left-1/2 w-3 h-3 border-2 border-cream-100 dark:border-sage-400 rounded-full opacity-60 transform -translate-x-1/2 -translate-y-1/2" />
+            {/* White frame border */}
+            <div
+              className="absolute border-2 border-white opacity-75 transition-all duration-100"
+              style={{
+                left: `${frameLeft}%`,
+                top: `${frameTop}%`,
+                width: `${visiblePercentage}%`,
+                height: `${visiblePercentage}%`,
+                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
+              }}
+            />
+            {/* Focal point marker at center */}
+            <div className="absolute top-1/2 left-1/2 w-4 h-4 border-2 border-red-400 rounded-full opacity-70 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
 
-          {/* Subtle rule of thirds grid */}
-          <div className="absolute inset-0 pointer-events-none opacity-20">
-            {/* Vertical thirds */}
+          {/* Rule of thirds grid */}
+          <div className="absolute inset-0 pointer-events-none opacity-15">
             <div className="absolute top-0 left-1/3 w-px h-full bg-cream-200 dark:bg-sage-500" />
             <div className="absolute top-0 left-2/3 w-px h-full bg-cream-200 dark:bg-sage-500" />
-            {/* Horizontal thirds */}
             <div className="absolute top-1/3 left-0 h-px w-full bg-cream-200 dark:bg-sage-500" />
             <div className="absolute top-2/3 left-0 h-px w-full bg-cream-200 dark:bg-sage-500" />
           </div>
         </div>
+
         <p className="text-xs text-muted dark:text-sage-400 mt-2">
-          Drag the image/video within the frame to position it. Use the zoom slider for fine adjustments. The preview shows the carousel fade sequence (2s in → 5s hold → 2s out).
+          At <strong>{zoomLevel.toFixed(2)}x zoom</strong>, approximately <strong>{visiblePercentage.toFixed(1)}%</strong> of your media is visible. Adjust zoom to frame different amounts of the image.
         </p>
 
-        {/* Video timeline */}
+        {/* Video Timeline */}
         {mediaType === 'video' && videoDuration > 0 && (
           <div className="mt-3 space-y-2">
             <label htmlFor="video-time" className="text-xs font-medium text-ink dark:text-cream-50">
@@ -335,38 +345,31 @@ export function FocalPointEditor({
           </div>
         )}
 
-        {/* Zoom and Alignment Controls */}
-        <div className="mt-3 space-y-2">
-          <label htmlFor="zoom-slider" className="text-xs font-medium text-ink dark:text-cream-50">
-            Zoom ({zoomLevel.toFixed(1)}x)
-          </label>
+        {/* Zoom Controls */}
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <label htmlFor="zoom-slider" className="text-xs font-medium text-ink dark:text-cream-50">
+              Zoom Level
+            </label>
+            <span className="text-xs font-mono bg-sage-200 dark:bg-sage-700 px-2 py-1 rounded text-ink dark:text-cream-50">
+              {zoomLevel.toFixed(2)}x
+            </span>
+          </div>
           <input
             id="zoom-slider"
             type="range"
             min="1"
-            max="3"
-            step="0.1"
+            max="2"
+            step="0.05"
             value={zoomLevel}
             onChange={handleZoomChange}
             className="w-full h-2 bg-sage-200 dark:bg-sage-700 rounded-lg appearance-none cursor-pointer"
           />
-
-          {/* Alignment Buttons */}
-          <div className="flex gap-2 pt-2">
-            <button
-              onClick={handleAlignHorizontal}
-              className="flex-1 text-xs px-3 py-1.5 bg-sage-200 dark:bg-sage-700 hover:bg-sage-300 dark:hover:bg-sage-600 rounded text-ink dark:text-cream-50 font-medium transition-colors"
-            >
-              Align Horizontal
-            </button>
-            <button
-              onClick={handleAlignVertical}
-              className="flex-1 text-xs px-3 py-1.5 bg-sage-200 dark:bg-sage-700 hover:bg-sage-300 dark:hover:bg-sage-600 rounded text-ink dark:text-cream-50 font-medium transition-colors"
-            >
-              Align Vertical
-            </button>
-          </div>
+          <p className="text-xs text-muted dark:text-sage-400">
+            Higher zoom = tighter crop (showing less of the image). Lower zoom = wider view. Adjust to frame the most important part of your image.
+          </p>
         </div>
+
         <style>{`
           @keyframes carouselFade {
             0% { opacity: 0; }
