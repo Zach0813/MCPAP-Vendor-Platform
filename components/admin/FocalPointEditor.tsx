@@ -201,10 +201,10 @@ export function FocalPointEditor({
   // At zoom 1.1, ~90.9% of the image is visible. At zoom 1.3, ~76.9% is visible.
   const visiblePercentage = 100 / zoomLevel;
 
-  // Frame always centered on focal point (no clamping - frame may extend past image edges)
+  // Frame always locked at center of preview — only the image moves
   const frameHalfSize = visiblePercentage / 2;
-  const frameLeft = focalPoint.x - frameHalfSize;
-  const frameTop = focalPoint.y - frameHalfSize;
+  const frameLeft = 50 - frameHalfSize;
+  const frameTop = 50 - frameHalfSize;
 
   return (
     <div className="space-y-4 rounded-card border border-border bg-sage-50 p-4 dark:bg-sage-800 dark:border-sage-700">
@@ -240,7 +240,7 @@ export function FocalPointEditor({
         </div>
 
         <p className="text-xs text-muted dark:text-sage-400 mb-3">
-          Drag to reposition. The <span className="font-medium">white frame</span> shows what's visible in the {platform === 'desktop' ? '16:9 desktop' : '9:16 mobile'} carousel at this zoom level. Set focal points independently for each platform.
+          Drag the image to position it. The <span className="font-medium">golden frame (with red center)</span> shows exactly what will be visible in the {platform === 'desktop' ? '16:9 desktop' : '9:16 mobile'} carousel. The center is your focal point—drag to position the image behind it.
         </p>
 
         {/* Carousel Preview Container */}
@@ -287,21 +287,27 @@ export function FocalPointEditor({
             />
           )}
 
-          {/* Viewport Frame with Focal Point — single element for no lag */}
+          {/* Viewport Frame with Focal Point — locked at center */}
           <div
-            className="absolute pointer-events-none"
+            className="absolute pointer-events-none transition-all duration-100"
             style={{
               left: `${frameLeft}%`,
               top: `${frameTop}%`,
               width: `${visiblePercentage}%`,
               height: `${visiblePercentage}%`,
-              border: '2px solid white',
-              opacity: 0.75,
-              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
+              border: '3px solid #fbbf24',
+              opacity: 1,
+              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5), inset 0 0 0 1px #fbbf24',
             }}
           >
             {/* Focal point marker at center of frame */}
-            <div className="absolute top-1/2 left-1/2 w-4 h-4 border-2 border-red-400 rounded-full opacity-70 transform -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute top-1/2 left-1/2 w-6 h-6 border-3 border-red-500 rounded-full opacity-90 transform -translate-x-1/2 -translate-y-1/2 shadow-lg" />
+
+            {/* Corner indicators for frame size */}
+            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-yellow-300" />
+            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-yellow-300" />
+            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-yellow-300" />
+            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-yellow-300" />
           </div>
 
           {/* Rule of thirds grid */}
@@ -314,7 +320,7 @@ export function FocalPointEditor({
         </div>
 
         <p className="text-xs text-muted dark:text-sage-400 mt-2">
-          At <strong>{zoomLevel.toFixed(2)}x zoom</strong>, approximately <strong>{visiblePercentage.toFixed(1)}%</strong> of your media is visible. Adjust zoom to frame different amounts of the image.
+          At <strong>{zoomLevel.toFixed(2)}x zoom</strong>, the frame shows <strong>{visiblePercentage.toFixed(1)}%</strong> of your media. Adjust zoom to show more or less of the image while keeping the focal point centered.
         </p>
 
         {/* Video Timeline */}
