@@ -9,12 +9,15 @@ import type { Database } from '@/types';
  * (not an interface) so it can satisfy `Record<string, unknown>` constraints
  * downstream if we ever swap to a typed insert/update here. See HANDOFF.md.
  */
+type FocalPoint = { x: number; y: number; zoom?: number; videoTime?: number };
+type PlatformFocalPoints = { desktop: FocalPoint; mobile: FocalPoint };
+
 type CarouselItem = {
   id: string;
   file_url: string;
   media_type: 'image' | 'video';
   title: string;
-  focal_point: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+  focal_point: FocalPoint | PlatformFocalPoints | null;
 };
 
 const supabase = createClient<Database>(
@@ -39,17 +42,17 @@ const supabase = createClient<Database>(
  */
 function getFocalPoint(
   focalPointData: CarouselItem['focal_point']
-): { x: number; y: number; zoom?: number } | null {
+): FocalPoint | null {
   if (!focalPointData) return null;
 
-  // Check if multi-platform format (has 'desktop' or 'mobile' keys)
-  if ('desktop' in focalPointData || 'mobile' in focalPointData) {
+  // Check if multi-platform format (has both 'desktop' and 'mobile' keys)
+  if ('desktop' in focalPointData && 'mobile' in focalPointData) {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     return isMobile ? focalPointData.mobile : focalPointData.desktop;
   }
 
   // Legacy single focal point format
-  return focalPointData as { x: number; y: number; zoom?: number };
+  return focalPointData as FocalPoint;
 }
 
 export function FeaturedCarousel() {
