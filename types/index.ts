@@ -193,10 +193,18 @@ export type GalleryItem = {
  * the carousel pan/Ken-Burns effect. Migration 0012 added those keys; older
  * rows may still have just { x, y }.
  *
+ * Supports both legacy (single focal point) and new (platform-specific) formats:
+ * - Legacy: { x: number; y: number; zoom?: number; videoTime?: number }
+ * - Multi-platform: { desktop: {...}, mobile: {...} }
+ *
  * storage_formats — array of file formats available on the server. For videos,
  * this tracks which formats exist (e.g., ['mp4', 'webm']). Used for playback
  * optimization and admin visibility into available formats.
  */
+export type FocalPointData =
+  | { x: number; y: number; zoom?: number; videoTime?: number }
+  | { desktop: { x: number; y: number; zoom?: number; videoTime?: number }; mobile: { x: number; y: number; zoom?: number; videoTime?: number } };
+
 export type MediaItem = {
   id: string;
   file_url: string;
@@ -206,7 +214,7 @@ export type MediaItem = {
   category: string;
   featured: boolean;
   featured_order: number | null;
-  focal_point: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+  focal_point: FocalPointData | null;
   storage_formats: string[] | null;
   created_by: string | null;
   created_at: string;
@@ -315,7 +323,7 @@ export type Database = {
           category?: string;
           featured?: boolean;
           featured_order?: number | null;
-          focal_point?: { x: number; y: number; zoom?: number; videoTime?: number } | null;
+          focal_point?: FocalPointData | null;
           storage_formats?: string[] | null;
           created_by?: string | null;
         };
